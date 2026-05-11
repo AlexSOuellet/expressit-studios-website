@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Geist:wght@400;500;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "on-tertiary": "#492900",
+                  "on-surface": "#dee3e9",
+                  "surface-tint": "#89ceff",
+                  "on-primary-fixed": "#001e2f",
+                  "error": "#ffb4ab",
+                  "background": "#0e1418",
+                  "secondary-fixed": "#47ffb8",
+                  "on-secondary-container": "#006141",
+                  "on-secondary-fixed-variant": "#005236",
+                  "secondary": "#6cffbf",
+                  "inverse-on-surface": "#2b3136",
+                  "outline": "#87929c",
+                  "on-error": "#690005",
+                  "tertiary-fixed": "#ffdcbc",
+                  "surface-container-highest": "#30353a",
+                  "on-primary-container": "#004361",
+                  "primary-fixed": "#c9e6ff",
+                  "tertiary-container": "#f09408",
+                  "on-primary-fixed-variant": "#004c6e",
+                  "surface-dim": "#0e1418",
+                  "secondary-container": "#00e5a0",
+                  "on-tertiary-fixed": "#2c1700",
+                  "surface-container-lowest": "#090f13",
+                  "on-secondary": "#003824",
+                  "error-container": "#93000a",
+                  "on-tertiary-fixed-variant": "#683d00",
+                  "inverse-surface": "#dee3e9",
+                  "surface-variant": "#30353a",
+                  "on-tertiary-container": "#5b3500",
+                  "on-surface-variant": "#bdc8d2",
+                  "inverse-primary": "#006591",
+                  "primary-container": "#00b4ff",
+                  "surface-container-low": "#171c21",
+                  "surface-bright": "#343a3f",
+                  "tertiary": "#ffb86a",
+                  "tertiary-fixed-dim": "#ffb86a",
+                  "on-primary": "#00344d",
+                  "primary": "#89ceff",
+                  "surface-container-high": "#252b2f",
+                  "on-background": "#dee3e9",
+                  "surface": "#0e1418",
+                  "outline-variant": "#3e4851",
+                  "on-error-container": "#ffdad6",
+                  "surface-container": "#1b2025",
+                  "primary-fixed-dim": "#89ceff",
+                  "secondary-fixed-dim": "#00e29e",
+                  "on-secondary-fixed": "#002114"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.125rem",
+                  "lg": "0.25rem",
+                  "xl": "0.5rem",
+                  "full": "0.75rem"
+          },
+          "spacing": {
+                  "md": "16px",
+                  "xl": "48px",
+                  "sm": "8px",
+                  "gutter": "24px",
+                  "margin-mobile": "20px",
+                  "unit": "4px",
+                  "margin-desktop": "64px",
+                  "lg": "24px",
+                  "xs": "4px"
+          },
+          "fontFamily": {
+                  "headline-md": ["Bebas Neue"],
+                  "body-lg": ["Geist"],
+                  "label-caps": ["JetBrains Mono"],
+                  "body-md": ["Geist"],
+                  "headline-xl": ["Bebas Neue"],
+                  "ui-mono": ["JetBrains Mono"],
+                  "display-lg": ["Bebas Neue"],
+                  "headline-sm": ["Bebas Neue"]
+          },
+          "fontSize": {
+                  "headline-md": ["32px", {"lineHeight": "1.2", "letterSpacing": "0.04em", "fontWeight": "400"}],
+                  "body-lg": ["18px", {"lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400"}],
+                  "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                  "body-md": ["16px", {"lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400"}],
+                  "headline-xl": ["48px", {"lineHeight": "1.2", "letterSpacing": "0.04em", "fontWeight": "400"}],
+                  "ui-mono": ["14px", {"lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                  "display-lg": ["72px", {"lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "400"}],
+                  "headline-sm": ["24px", {"lineHeight": "1.2", "letterSpacing": "0.04em", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .glass-card {
+      background: rgba(20, 20, 20, 0.7);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .glow-shadow:hover {
+      box-shadow: 0 10px 30px rgba(0, 180, 255, 0.15);
+      border-color: #89ceff;
+    }
+    .primary-gradient {
+      background: linear-gradient(135deg, #89ceff 0%, #00e5a0 100%);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface selection:bg-primary/30">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-surface/70 backdrop-blur-xl border-b border-white/10 shadow-[0_10px_30px_rgba(0,180,255,0.05)]">
+<div class="flex justify-between items-center px-margin-desktop py-md max-w-full">
+<div class="font-headline-sm text-headline-sm text-primary tracking-tighter">EXPRESSIT STUDIOS</div>
+<div class="hidden md:flex items-center space-x-xl">
+<a class="font-ui-mono text-ui-mono uppercase text-primary font-bold border-b-2 border-primary pb-1" href="#">Home</a>
+<a class="font-ui-mono text-ui-mono uppercase text-on-surface-variant hover:text-on-surface transition-colors hover:backdrop-blur-2xl hover:bg-white/5" href="#">Services</a>
+<a class="font-ui-mono text-ui-mono uppercase text-on-surface-variant hover:text-on-surface transition-colors hover:backdrop-blur-2xl hover:bg-white/5" href="#">Process</a>
+<a class="font-ui-mono text-ui-mono uppercase text-on-surface-variant hover:text-on-surface transition-colors hover:backdrop-blur-2xl hover:bg-white/5" href="#">Track Order</a>
+</div>
+<button class="primary-gradient text-on-primary-fixed font-ui-mono text-ui-mono px-lg py-sm rounded-lg scale-95 active:scale-90 transition-transform uppercase">
+        Start Project
+      </button>
+</div>
+</nav>
+<!-- Hero Section -->
+<section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-xl">
+<div class="absolute inset-0 z-0">
+<img alt="Cinematic Studio" class="w-full h-full object-cover opacity-40" data-alt="A cinematic wide-angle shot of a high-end film production studio at night. The room is filled with professional camera equipment, monitors glowing with deep cyan and teal color grades, and a slight atmospheric haze illuminated by soft backlighting. The aesthetic is dark, moody, and ultra-modern, reflecting a professional avant-garde creative environment with sharp focus and deep shadows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBE2IivJ4gaNa7VWCL-p5AE6o7UieZc8y8RVOTX-O7ceocuplLLXIcm0umSAcK7d2LEMgkR0LF-0oJSiWDPR1ugwBB-rUPdGw64qOcG8YYewhqYkV_1RNLW-s3dwue6regrAbQDUavGQhElkHHK4xjJl_27SzjiVCH9tv5FdQXp1pEBgUqxAvFDydQTxOTGCI6gJuGF_GQlad73O4GGrB_sTZBQ6DRI-DndR0lwdBRteXVf5zzpccRiP8g-pqFpynenxRJsP2XLCJ8A"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent"></div>
+</div>
+<div class="relative z-10 text-center px-margin-mobile md:px-margin-desktop">
+<span class="font-label-caps text-label-caps text-primary tracking-widest block mb-md uppercase">Motion Identity Redefined</span>
+<h1 class="font-display-lg text-display-lg md:text-[96px] text-on-surface leading-none mb-lg max-w-4xl mx-auto">
+        Still Photos, <span class="text-primary italic">Cinematic</span> Stories.
+      </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-xl">
+        We transform your static captures into high-fidelity narrative films using state-of-the-art AI enhancement and avant-garde editing techniques.
+      </p>
+<div class="flex flex-col md:flex-row items-center justify-center gap-md">
+<button class="primary-gradient text-on-primary-fixed font-ui-mono text-ui-mono px-xl py-md rounded-lg scale-95 active:scale-90 transition-transform uppercase flex items-center gap-sm">
+          Start Your Video <span class="material-symbols-outlined" data-icon="play_arrow">play_arrow</span>
+</button>
+<button class="glass-card text-on-surface font-ui-mono text-ui-mono px-xl py-md rounded-lg scale-95 active:scale-90 transition-transform uppercase hover:border-primary/50">
+          View Reel
+        </button>
+</div>
+</div>
+</section>
+<!-- Services Section -->
+<section class="py-xl px-margin-desktop">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter max-w-7xl mx-auto">
+<!-- Business Track -->
+<div class="glass-card glow-shadow p-xl rounded-xl transition-all duration-500 group relative overflow-hidden h-[500px] flex flex-col justify-end">
+<div class="absolute inset-0 -z-10 opacity-30 group-hover:opacity-50 transition-opacity duration-700">
+<img alt="Business Ads" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" data-alt="A high-tech office environment with large glass windows overlooking a neon-lit city at dusk. In the foreground, a sleek workspace features minimalist tablets and holographic displays glowing with data visualizations in cyan and emerald green. The atmosphere is professional, fast-paced, and high-performance, tailored for corporate advertisement aesthetics." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcONUjvthgMrAIw2yomMP2Q1-JFPGDmeXWVzn7zxSxqDVt_v2Qmp4hDHvFqtKdw8MTMyZSA2W9cdT3vmM6SQ9n4AeX86_Bifv5LF_0nMWKE6FsQsOXiw_yM0TYtoHmS4k9e_eAaJ3c8czwEOiK_Z_nY98gSoaZhESd_oXfgR9R-E_0ayTQTAqhy0AdGmbhuBT3i6rUWUIM_5_Aiclmmlddrwy7NPhSAWLmtTHPdlnh7JpGuMS3zS5qlwzJKB9Y9avQo1VCgV3QPFxF"/>
+</div>
+<div class="relative z-10">
+<span class="font-label-caps text-label-caps text-secondary mb-sm block">TRACK 01</span>
+<h3 class="font-headline-xl text-headline-xl text-on-surface mb-md">Business Ads</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-lg max-w-sm">
+            High-performance motion graphics and video production designed for impact. Elevate your brand identity with cinematic precision.
+          </p>
+<div class="flex gap-xs">
+<span class="bg-surface-container-highest font-label-caps text-label-caps px-md py-xs rounded-full">4K RAW</span>
+<span class="bg-surface-container-highest font-label-caps text-label-caps px-md py-xs rounded-full">COMMERCIAL</span>
+</div>
+</div>
+</div>
+<!-- Personal Track -->
+<div class="glass-card glow-shadow p-xl rounded-xl transition-all duration-500 group relative overflow-hidden h-[500px] flex flex-col justify-end">
+<div class="absolute inset-0 -z-10 opacity-30 group-hover:opacity-50 transition-opacity duration-700">
+<img alt="Personal Memories" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" data-alt="A nostalgic, artistic outdoor scene with warm golden hour lighting filtering through tall pine trees. A vintage camera sits on a wooden ledge, surrounded by printed high-quality photographs that appear to be coming to life with subtle motion effects. The lighting is soft and ethereal, using a palette of deep ambers and soft teals to evoke emotion and memory." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOsRvhqWqCH7ebNx7vNHydz9bxipypVqEkd0Z7exvuC_k1mXKKU7vI9jHBc4ljB6oMWBzbYIlx7dMXzbO7IOl9XytULi0nnSLC1jhvmc1q3v6NQUmv62hW7jSAFJvsix7cZvXEoOFRz_WUlSBsJ5wfFLDVSHB5VOHzsAa3rdZghky0teL3UFc1D5FR-lMEnzo2xzJPkYWKJodU7MAiLXE5PMbzF2Jcu17dOoATgfds31TOIF1S5Bn30l5W1o64_YduhDwjU_SwEYzm"/>
+</div>
+<div class="relative z-10">
+<span class="font-label-caps text-label-caps text-primary mb-sm block">TRACK 02</span>
+<h3 class="font-headline-xl text-headline-xl text-on-surface mb-md">Personal Memories</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-lg max-w-sm">
+            Turn your family photos and travel captures into emotional short films. Preserving the essence of every frame.
+          </p>
+<div class="flex gap-xs">
+<span class="bg-surface-container-highest font-label-caps text-label-caps px-md py-xs rounded-full">EMOTIVE</span>
+<span class="bg-surface-container-highest font-label-caps text-label-caps px-md py-xs rounded-full">LIFETIME</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Process Section -->
+<section class="bg-surface-container-lowest py-xl">
+<div class="px-margin-desktop max-w-7xl mx-auto">
+<div class="mb-xl text-center">
+<span class="font-label-caps text-label-caps text-primary tracking-widest uppercase">The Cinematic Workflow</span>
+<h2 class="font-headline-xl text-headline-xl text-on-surface mt-sm">Seamless Creation</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter relative">
+<!-- Connecting Line -->
+<div class="hidden md:block absolute top-1/2 left-0 w-full h-px bg-white/5 -translate-y-1/2 z-0"></div>
+<!-- Step 1 -->
+<div class="relative z-10 flex flex-col items-center text-center group">
+<div class="w-20 h-20 rounded-full glass-card flex items-center justify-center mb-lg group-hover:border-primary transition-all duration-300">
+<span class="material-symbols-outlined text-headline-md text-primary" data-icon="cloud_upload">cloud_upload</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface mb-sm">Upload</h4>
+<p class="font-body-md text-body-md text-outline">Drop your high-res stills directly into our encrypted creative pipeline.</p>
+</div>
+<!-- Step 2 -->
+<div class="relative z-10 flex flex-col items-center text-center group">
+<div class="w-20 h-20 rounded-full glass-card flex items-center justify-center mb-lg group-hover:border-secondary transition-all duration-300">
+<span class="material-symbols-outlined text-headline-md text-secondary" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface mb-sm">AI Enhancement</h4>
+<p class="font-body-md text-body-md text-outline">Our proprietary engines inject temporal coherence and cinematic flow.</p>
+</div>
+<!-- Step 3 -->
+<div class="relative z-10 flex flex-col items-center text-center group">
+<div class="w-20 h-20 rounded-full glass-card flex items-center justify-center mb-lg group-hover:border-primary transition-all duration-300">
+<span class="material-symbols-outlined text-headline-md text-primary" data-icon="rocket_launch">rocket_launch</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface mb-sm">Delivery</h4>
+<p class="font-body-md text-body-md text-outline">Receive your motion masterpiece in 4K LOG format within 48 hours.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Newsletter/Contact CTA -->
+<section class="py-xl px-margin-desktop flex items-center justify-center">
+<div class="glass-card p-xl rounded-xl max-w-4xl w-full flex flex-col md:flex-row items-center justify-between gap-xl">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Ready to start?</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Join 500+ creators pushing the limits of motion.</p>
+</div>
+<div class="flex w-full md:w-auto gap-xs">
+<input class="bg-surface-container-lowest border-none ring-1 ring-white/10 focus:ring-primary rounded-lg font-ui-mono text-ui-mono px-lg py-sm w-full md:w-64" placeholder="project_lead@studio.com" type="email"/>
+<button class="primary-gradient text-on-primary-fixed p-sm rounded-lg">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="w-full py-xl border-t border-white/5 bg-surface-container-lowest">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter px-margin-desktop items-center">
+<div class="font-headline-md text-headline-md text-on-surface order-2 md:order-1 text-center md:text-left">
+        EXPRESSIT STUDIOS
+      </div>
+<div class="font-ui-mono text-label-caps text-outline order-1 md:order-2 text-center">
+        © 2024 EXPRESSIT STUDIOS. THE ART OF MOTION.
+      </div>
+<div class="flex justify-center md:justify-end space-x-lg order-3">
+<a class="font-ui-mono text-label-caps text-outline hover:text-primary transition-colors duration-300 opacity-80 hover:opacity-100" href="#">Instagram</a>
+<a class="font-ui-mono text-label-caps text-outline hover:text-primary transition-colors duration-300 opacity-80 hover:opacity-100" href="#">Vimeo</a>
+<a class="font-ui-mono text-label-caps text-outline hover:text-primary transition-colors duration-300 opacity-80 hover:opacity-100" href="#">LinkedIn</a>
+<a class="font-ui-mono text-label-caps text-outline hover:text-primary transition-colors duration-300 opacity-80 hover:opacity-100" href="#">Terms</a>
+</div>
+</div>
+</footer>
+</body></html>
