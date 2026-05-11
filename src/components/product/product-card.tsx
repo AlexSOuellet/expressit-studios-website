@@ -18,7 +18,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <Link
       href={`/products/${product.slug}`}
-      className="glass-card glow-shadow rounded-xl overflow-hidden group flex flex-col"
+      className="gradient-border glass-card glow-shadow rounded-xl overflow-hidden group flex flex-col"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden">
         <Image
@@ -28,7 +28,7 @@ export function ProductCard({ product }: { product: Product }) {
           sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
           className="object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-surface/90 via-surface/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface/80 via-transparent to-transparent" />
       </div>
       <div className="p-6 flex flex-col flex-1">
         <span className="font-mono text-label-caps text-primary mb-2 uppercase tracking-widest">
