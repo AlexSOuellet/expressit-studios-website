@@ -1,26 +1,166 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ---------------------------------------------------------------
+   Cinematic Motion System — design tokens
+   Source of truth: /_reference/DESIGN.md
+   --------------------------------------------------------------- */
+@theme {
+  /* ----- Colors ----- */
+  --color-background: #0e1418;
+  --color-on-background: #dee3e9;
+  --color-surface: #0e1418;
+  --color-surface-dim: #0e1418;
+  --color-surface-bright: #343a3f;
+  --color-surface-container-lowest: #090f13;
+  --color-surface-container-low: #171c21;
+  --color-surface-container: #1b2025;
+  --color-surface-container-high: #252b2f;
+  --color-surface-container-highest: #30353a;
+  --color-surface-variant: #30353a;
+  --color-on-surface: #dee3e9;
+  --color-on-surface-variant: #bdc8d2;
+  --color-inverse-surface: #dee3e9;
+  --color-inverse-on-surface: #2b3136;
+  --color-outline: #87929c;
+  --color-outline-variant: #3e4851;
+  --color-surface-tint: #89ceff;
+
+  --color-primary: #89ceff;
+  --color-on-primary: #00344d;
+  --color-primary-container: #00b4ff;
+  --color-on-primary-container: #004361;
+  --color-inverse-primary: #006591;
+  --color-primary-fixed: #c9e6ff;
+  --color-primary-fixed-dim: #89ceff;
+  --color-on-primary-fixed: #001e2f;
+  --color-on-primary-fixed-variant: #004c6e;
+
+  --color-secondary: #6cffbf;
+  --color-on-secondary: #003824;
+  --color-secondary-container: #00e5a0;
+  --color-on-secondary-container: #006141;
+  --color-secondary-fixed: #47ffb8;
+  --color-secondary-fixed-dim: #00e29e;
+  --color-on-secondary-fixed: #002114;
+  --color-on-secondary-fixed-variant: #005236;
+
+  --color-tertiary: #ffb86a;
+  --color-on-tertiary: #492900;
+  --color-tertiary-container: #f09408;
+  --color-on-tertiary-container: #5b3500;
+  --color-tertiary-fixed: #ffdcbc;
+  --color-tertiary-fixed-dim: #ffb86a;
+  --color-on-tertiary-fixed: #2c1700;
+  --color-on-tertiary-fixed-variant: #683d00;
+
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+
+  /* ----- Font families (variables wired by next/font in layout.tsx) ----- */
+  --font-display: var(--font-bebas-neue), "Bebas Neue", sans-serif;
+  --font-headline: var(--font-bebas-neue), "Bebas Neue", sans-serif;
+  --font-body: var(--font-geist), "Geist", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
+
+  /* ----- Type scale (font-size + line-height + tracking + weight) ----- */
+  --text-display-lg: 72px;
+  --text-display-lg--line-height: 1.1;
+  --text-display-lg--letter-spacing: 0.02em;
+  --text-display-lg--font-weight: 400;
+
+  --text-headline-xl: 48px;
+  --text-headline-xl--line-height: 1.2;
+  --text-headline-xl--letter-spacing: 0.04em;
+  --text-headline-xl--font-weight: 400;
+
+  --text-headline-md: 32px;
+  --text-headline-md--line-height: 1.2;
+  --text-headline-md--letter-spacing: 0.04em;
+  --text-headline-md--font-weight: 400;
+
+  --text-headline-sm: 24px;
+  --text-headline-sm--line-height: 1.2;
+  --text-headline-sm--letter-spacing: 0.04em;
+  --text-headline-sm--font-weight: 400;
+
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 1.6;
+  --text-body-lg--letter-spacing: 0em;
+  --text-body-lg--font-weight: 400;
+
+  --text-body-md: 16px;
+  --text-body-md--line-height: 1.5;
+  --text-body-md--letter-spacing: 0em;
+  --text-body-md--font-weight: 400;
+
+  --text-ui-mono: 14px;
+  --text-ui-mono--line-height: 1.4;
+  --text-ui-mono--letter-spacing: -0.01em;
+  --text-ui-mono--font-weight: 500;
+
+  --text-label-caps: 12px;
+  --text-label-caps--line-height: 1;
+  --text-label-caps--letter-spacing: 0.1em;
+  --text-label-caps--font-weight: 700;
+
+  /* ----- Spacing (4px base unit) ----- */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 48px;
+  --spacing-gutter: 24px;
+  --spacing-margin-mobile: 20px;
+  --spacing-margin-desktop: 64px;
+
+  /* ----- Radii ----- */
+  --radius-sm: 0.125rem;
+  --radius: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* ---------------------------------------------------------------
+   Reusable component classes
+   --------------------------------------------------------------- */
+@layer components {
+  .glass-card {
+    background: rgba(20, 20, 20, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  .glow-shadow {
+    transition:
+      box-shadow 300ms ease,
+      border-color 300ms ease;
+  }
+
+  .glow-shadow:hover {
+    box-shadow: 0 10px 30px rgba(0, 180, 255, 0.15);
+    border-color: var(--color-primary);
+  }
+
+  .primary-gradient {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary-container) 100%);
   }
 }
 
+/* ---------------------------------------------------------------
+   Base
+   --------------------------------------------------------------- */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-on-surface);
+  font-family: var(--font-body);
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+  color: var(--color-on-primary);
 }
