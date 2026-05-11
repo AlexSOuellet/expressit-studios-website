@@ -4,21 +4,21 @@ const STEPS = [
   {
     icon: CloudUpload,
     title: "Upload",
-    body: "Drop your high-res photos into our encrypted creative pipeline after checkout.",
+    body: "Drop your high-res stills directly into our encrypted creative pipeline.",
     accent: "primary" as const,
     glow: "rgba(0, 180, 255, 0.25)",
   },
   {
     icon: Sparkles,
-    title: "Cinematic Edit",
-    body: "Our team enhances, color grades, and edits your photos into a high-fidelity narrative.",
+    title: "AI Enhancement",
+    body: "Our proprietary engines inject temporal coherence and cinematic flow.",
     accent: "secondary" as const,
     glow: "rgba(0, 229, 160, 0.25)",
   },
   {
     icon: Rocket,
     title: "Delivery",
-    body: "Receive your finished MP4 in 24–48 hours. Two revisions included.",
+    body: "Receive your motion masterpiece in high resolution within 48 hours.",
     accent: "tertiary" as const,
     glow: "rgba(245, 166, 35, 0.25)",
   },
@@ -47,7 +47,7 @@ export function Process() {
             The Cinematic Workflow
           </span>
           <h2 className="font-display text-headline-xl md:text-display-lg text-on-surface mt-3 leading-none">
-            Three steps. Cinema delivered.
+            Seamless Creation
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter relative">

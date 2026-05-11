@@ -3,6 +3,7 @@ import Link from "next/link";
 
 interface Track {
   href: string;
+  trackLabel: string;
   title: string;
   description: string;
   image: { src: string; alt: string };
@@ -14,6 +15,7 @@ interface Track {
 const TRACKS: Track[] = [
   {
     href: "/business",
+    trackLabel: "Track 01",
     title: "Business Ads",
     description:
       "High-performance motion graphics built for scroll-stopping product ads. From single videos to 3-video campaigns",
@@ -22,11 +24,12 @@ const TRACKS: Track[] = [
       alt: "Cinematic product video ad",
     },
     accent: "secondary",
-    chips: ["4K", "Commercial", "From $35"],
+    chips: ["Commercial", "From $35"],
     cta: "Shop Business →",
   },
   {
     href: "/personal",
+    trackLabel: "Track 02",
     title: "Personal Memories",
     description:
       "Turn your photos into emotional short films. Pets, birthdays, anniversaries, gender reveals, weddings",
@@ -35,24 +38,14 @@ const TRACKS: Track[] = [
       alt: "Cinematic memory video for life moments",
     },
     accent: "primary",
-    chips: ["Emotive", "15 sec", "$24.99"],
+    chips: ["Emotive", "$24.99"],
     cta: "Shop Personal →",
   },
 ];
 
 export function Tracks() {
   return (
-    <section className="px-margin-mobile md:px-margin-desktop py-24 relative overflow-hidden">
-      <div className="text-center mb-12 max-w-3xl mx-auto">
-        <h2 className="font-display text-headline-xl md:text-display-lg text-on-surface leading-none">
-          Two paths{" "}
-          <span className="italic text-primary inline-block pr-[0.1em]">
-            One
-          </span>{" "}
-          studio
-        </h2>
-      </div>
-
+    <section className="px-margin-mobile md:px-margin-desktop pt-40 pb-24 relative overflow-hidden">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter max-w-7xl mx-auto">
         {TRACKS.map((track) => {
           const accentColor =
@@ -66,7 +59,7 @@ export function Tracks() {
             <Link
               key={track.href}
               href={track.href}
-              className={`glass-card rounded-xl transition-all duration-500 group relative overflow-hidden h-[520px] flex flex-col justify-end p-12 hover:-translate-y-1 ${accentGlow}`}
+              className={`glass-card rounded-xl transition-all duration-500 group relative overflow-hidden h-[400px] flex flex-col justify-end p-10 hover:-translate-y-1 ${accentGlow}`}
             >
               <div className="absolute inset-0 -z-10 opacity-70 group-hover:opacity-100 transition-opacity duration-700">
                 <Image
@@ -80,6 +73,11 @@ export function Tracks() {
               </div>
 
               <div className="relative z-10">
+                <span
+                  className={`font-mono text-label-caps uppercase tracking-widest block mb-2 ${accentColor}`}
+                >
+                  {track.trackLabel}
+                </span>
                 <h3 className="font-headline text-headline-xl text-on-surface mb-4">
                   {track.title}
                 </h3>
