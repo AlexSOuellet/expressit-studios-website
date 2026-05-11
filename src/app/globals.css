@@ -105,12 +105,13 @@
   --text-label-caps--letter-spacing: 0.1em;
   --text-label-caps--font-weight: 700;
 
-  /* ----- Spacing (4px base unit) ----- */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 48px;
+  /* ----- Spacing —————————————————————————————————————
+     Tailwind v4 uses a 4px base unit by default, which matches our design system.
+     Numeric scale already gives us: 1 = 4px (xs), 2 = 8px (sm), 4 = 16px (md),
+     6 = 24px (lg/gutter), 12 = 48px (xl). Only the unique semantic tokens
+     below need custom definitions. Avoid naming them xs/sm/md/lg/xl because
+     those keywords already control widths, heights, gaps, etc., and would
+     poison utilities like max-w-xl. */
   --spacing-gutter: 24px;
   --spacing-margin-mobile: 20px;
   --spacing-margin-desktop: 64px;

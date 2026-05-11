@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, Geist, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { SiteHeader } from "@/components/site/site-header";
+import { SiteFooter } from "@/components/site/site-footer";
 
 const bebasNeue = Bebas_Neue({
   variable: "--font-bebas-neue",
@@ -50,7 +52,9 @@ export default function RootLayout({
       className={`${bebasNeue.variable} ${geist.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="bg-background text-on-surface min-h-full flex flex-col selection:bg-primary/30">
-        {children}
+        <SiteHeader />
+        <div className="flex-1 flex flex-col pt-20">{children}</div>
+        <SiteFooter />
       </body>
     </html>
   );
