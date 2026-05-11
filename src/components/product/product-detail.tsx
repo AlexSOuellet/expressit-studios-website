@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   type Product,
   findVariant,
@@ -24,6 +24,11 @@ export function ProductDetail({ product }: { product: Product }) {
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentImage, setCurrentImage] = useState(0);
+  const imageCount = product.images.length;
+  const goPrev = () =>
+    setCurrentImage((i) => (i - 1 + imageCount) % imageCount);
+  const goNext = () => setCurrentImage((i) => (i + 1) % imageCount);
 
   const variant = useMemo(() => findVariant(product, selection), [
     product,
@@ -67,35 +72,124 @@ export function ProductDetail({ product }: { product: Product }) {
 
   return (
     <main className="flex-1 px-margin-mobile md:px-margin-desktop py-16">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16">
-        {/* Image gallery */}
-        <div className="space-y-4">
-          <div className="relative aspect-square w-full overflow-hidden rounded-xl glass-card">
-            <Image
-              src={product.images[0].src}
-              alt={product.images[0].alt}
-              fill
-              priority
-              sizes="(min-width: 1024px) 50vw, 100vw"
-              className="object-cover"
-            />
-          </div>
-          {product.images.length > 1 && (
-            <div className="grid grid-cols-4 gap-2">
-              {product.images.slice(1).map((img) => (
-                <div
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
+        {/* Image slideshow */}
+        <div className="space-y-3 lg:sticky lg:top-24 lg:self-start">
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl glass-card group">
+            {product.images.map((img, i) => {
+              const isVideo = /\.(mp4|webm|mov)$/i.test(img.src);
+              const isActive = i === currentImage;
+              return isVideo ? (
+                <video
                   key={img.src}
-                  className="relative aspect-square overflow-hidden rounded-md glass-card"
+                  src={img.src}
+                  autoPlay={isActive}
+                  loop
+                  muted
+                  playsInline
+                  preload="metadata"
+                  aria-label={img.alt}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                    isActive ? "opacity-100" : "opacity-0 pointer-events-none"
+                  }`}
+                />
+              ) : (
+                <Image
+                  key={img.src}
+                  src={img.src}
+                  alt={img.alt}
+                  fill
+                  priority={i === 0}
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className={`object-cover transition-opacity duration-300 ${
+                    isActive ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              );
+            })}
+            {imageCount > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={goPrev}
+                  aria-label="Previous image"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-surface-container-lowest/80 backdrop-blur border border-white/10 text-on-surface hover:bg-surface-container-lowest opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                 >
-                  <Image
-                    src={img.src}
-                    alt={img.alt}
-                    fill
-                    sizes="20vw"
-                    className="object-cover"
-                  />
+                  <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={goNext}
+                  aria-label="Next image"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-surface-container-lowest/80 backdrop-blur border border-white/10 text-on-surface hover:bg-surface-container-lowest opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                >
+                  <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                </button>
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+                  {product.images.map((img, i) => (
+                    <button
+                      key={img.src}
+                      type="button"
+                      onClick={() => setCurrentImage(i)}
+                      aria-label={`Go to image ${i + 1}`}
+                      aria-current={i === currentImage}
+                      className={`h-2 rounded-full transition-all ${
+                        i === currentImage
+                          ? "w-6 bg-primary"
+                          : "w-2 bg-white/40 hover:bg-white/60"
+                      }`}
+                    />
+                  ))}
                 </div>
-              ))}
+              </>
+            )}
+          </div>
+          {imageCount > 1 && (
+            <div className="grid grid-cols-4 gap-2">
+              {product.images.map((img, i) => {
+                const isVideo = /\.(mp4|webm|mov)$/i.test(img.src);
+                return (
+                  <button
+                    key={img.src}
+                    type="button"
+                    onClick={() => setCurrentImage(i)}
+                    aria-label={`Show ${img.alt}`}
+                    aria-current={i === currentImage}
+                    className={`relative aspect-square overflow-hidden rounded-md glass-card transition-all ${
+                      i === currentImage
+                        ? "ring-2 ring-primary"
+                        : "opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    {isVideo ? (
+                      <>
+                        <video
+                          src={img.src}
+                          muted
+                          playsInline
+                          preload="metadata"
+                          aria-label={img.alt}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <span
+                          aria-hidden="true"
+                          className="absolute bottom-1 right-1 text-[10px] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded bg-background/80 text-on-surface"
+                        >
+                          Video
+                        </span>
+                      </>
+                    ) : (
+                      <Image
+                        src={img.src}
+                        alt={img.alt}
+                        fill
+                        sizes="20vw"
+                        className="object-cover"
+                      />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

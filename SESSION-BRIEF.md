@@ -1,6 +1,6 @@
 # ExpressIt Studios Website — Session Brief
 
-> Read this at the start of every session. Updated 2026-05-11.
+> Read this at the start of every session. Updated 2026-05-11 (post-polish).
 
 ## What this is
 
@@ -46,16 +46,42 @@ Forked nothing — built from scratch this session.
 
 ## Visual decisions made
 
-- Hero: AI-generated cinematic studio image at `public/hero/studio.png`, 50% opacity, gradient overlay
+**Home**
+- Hero: AI-generated cinematic studio image at `public/hero/studio.png`, `min-h-screen`, opacity-40, image bleeds 140vh down into Tracks for a continuous cinematic feel.
 - Headline: "Still Photos *Cinematic* Stories" — no punctuation, "Cinematic" italic primary cyan
-- Tracks: two cards with custom AI-generated images at `public/tracks/business.png` and `public/tracks/personal.png`
-- Tracks heading: "Two paths *One* studio"
+- Tracks: two cards, `h-[400px]`, `TRACK 01 / TRACK 02` eyebrow labels, no section header (cards directly under hero)
+- Process: eyebrow "The Cinematic Workflow" + headline "Seamless Creation"; steps Upload / AI Enhancement / Delivery; "high resolution within 48 hours"
 - Header: solid bg, white wordmark, centered nav with active-page underline, "Start Project" CTA right
+
+**Business + Personal listing pages**
+- Hero with banner bg + bleed gradient (60vh)
+- Sample reels: 3 looping silent videos in a `9/16` grid from `public/samples/{business,personal}/`
+- Stills / Occasions grid: 6 frames each from `public/examples/{business,personal}/`
+- Before & after: 2 (business) / 4 (personal) wide images
+- Single product as a horizontal feature card (image left, content right) via `<ProductCard layout="horizontal" />`
+
+**Product detail (`/products/[slug]`)**
+- Manual slideshow: 4:3 aspect, prev/next chevrons (visible on hover), dot indicators, click-to-jump thumbnail strip
+- Supports `.mp4`/`.webm`/`.mov` in the `images:` field — autoplay+loop+muted when active. Currently each product leads with a sample reel.
+- Sticky on `lg` viewports so the gallery stays visible while reading the right column.
+
+## Real media (from Etsy assets)
+
+Copied a curated set under `public/` from `C:\Projects\Etsy Listings\`:
+
+- `public/hero/business.png` + `public/hero/personal.png` — carousel banners (⚠ have promotional text overlay — see open items)
+- `public/samples/business/` — `hyper-motion.mp4`, `tv-spot-1.mp4`, `tv-spot-2.mp4`
+- `public/samples/personal/` — `scrappydoo.mp4`, `pet.mp4` (slowlucy), `gender-reveal.mp4`
+- `public/examples/business/` — 6 stills + 2 before/afters
+- `public/examples/personal/` — 6 stills + 4 before/afters
+
+**Do not use Magnetic Smiles files** — that's a real customer; reserved for a future gallery feature.
 
 ## Open items / next steps
 
 | Task | Owner | Notes |
 |---|---|---|
+| Replace hero bg for Business + Personal pages | Both | `public/hero/business.png` and `public/hero/personal.png` are Etsy carousel banners with promo text ("Celebrate Big Moments", "SHOP CELEBRATIONS") baked in. Either swap for clean atmospheric stills or drop the bg image and revert to gradient-only hero. |
 | Set Stripe test keys in `.env.local` | Alex | `STRIPE_SECRET_KEY=sk_test_...` + `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...` |
 | Test checkout end-to-end in test mode | Both | Card `4242 4242 4242 4242` |
 | Review product Markdown copy in `src/content/products/` | Alex | Voice + accuracy |

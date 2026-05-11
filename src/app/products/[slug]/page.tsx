@@ -20,7 +20,9 @@ export async function generateMetadata({
 
   const title = product.seo.title ?? product.title;
   const description = product.seo.description ?? product.short_description;
-  const ogImage = product.seo.og_image ?? product.images[0]?.src;
+  const ogImage =
+    product.seo.og_image ??
+    product.images.find((i) => !/\.(mp4|webm|mov)$/i.test(i.src))?.src;
 
   return {
     title,
@@ -59,11 +61,13 @@ export default async function ProductPage({
     "@type": "Product",
     name: product.title,
     description: product.short_description,
-    image: product.images.map((i) =>
-      i.src.startsWith("http")
-        ? i.src
-        : `https://expressitstudios.com${i.src}`
-    ),
+    image: product.images
+      .filter((i) => !/\.(mp4|webm|mov)$/i.test(i.src))
+      .map((i) =>
+        i.src.startsWith("http")
+          ? i.src
+          : `https://expressitstudios.com${i.src}`
+      ),
     brand: { "@type": "Brand", name: "ExpressIt Studios" },
     offers: {
       "@type": "AggregateOffer",

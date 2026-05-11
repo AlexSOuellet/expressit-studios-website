@@ -31,10 +31,18 @@ options:
       - { value: other, label: "Other" }
 
 images:
-  - src: /products/personal/carousel-celebrations.png
-    alt: Cinematic memory video for life moments
-  - src: /products/personal/carousel-pet.png
-    alt: Custom pet memory video example
+  - src: /samples/personal/scrappydoo.mp4
+    alt: Scrappy memory video reel
+  - src: /examples/personal/pet-tribute.png
+    alt: Pet tribute video final frame
+  - src: /examples/personal/birthday.jpg
+    alt: Birthday memory video example
+  - src: /examples/personal/gender-reveal.jpg
+    alt: Gender reveal memory video example
+  - src: /examples/personal/memorial.jpg
+    alt: Pet memorial video example
+  - src: /examples/personal/new-pup.jpg
+    alt: New pet welcome video example
 
 tags:
   - personal video

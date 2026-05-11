@@ -48,10 +48,20 @@ variants:
     attributes: { duration: premium, quantity: bundle }
 
 images:
-  - src: /products/business/carousel-product.png
-    alt: Cinematic product video ad showcase
-  - src: /products/business/carousel-bundle.png
-    alt: 3-video bundle preview
+  - src: /samples/business/hyper-motion.mp4
+    alt: Hyper-motion product ad reel
+  - src: /examples/business/runner.png
+    alt: Runner product ad still
+  - src: /examples/business/shatter.png
+    alt: Shatter effect product ad
+  - src: /examples/business/energy-ring.png
+    alt: Energy ring product ad
+  - src: /examples/business/tv-macro.png
+    alt: Macro product detail still
+  - src: /examples/business/tv-barn.png
+    alt: Cinematic barn shot still
+  - src: /examples/business/tv-wheat.png
+    alt: Wheat field commercial still
 
 tags:
   - product video
