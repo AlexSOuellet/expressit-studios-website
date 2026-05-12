@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import Stripe from "stripe";
-import { stripe, getSiteUrl } from "@/lib/stripe";
+import { getStripe, getSiteUrl } from "@/lib/stripe";
 import { getProductBySlug } from "@/lib/products";
 
 const requestSchema = z.object({
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
   );
 
   try {
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       mode: "payment",
       line_items: [
         {

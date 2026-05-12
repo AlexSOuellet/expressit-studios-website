@@ -1,19 +1,22 @@
 import "server-only";
 import Stripe from "stripe";
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  // Don't throw at import time — keep dev server runnable without keys.
-  // The API route checks for the key and returns a clear error if missing.
-  console.warn(
-    "[stripe] STRIPE_SECRET_KEY is not set. Checkout will fail until it is configured in .env.local."
-  );
-}
+let cached: Stripe | null = null;
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "sk_test_unset", {
-  // Pin the API version so Stripe never silently breaks the integration.
-  apiVersion: "2026-04-22.dahlia",
-  typescript: true,
-});
+export function getStripe(): Stripe {
+  if (cached) return cached;
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) {
+    throw new Error(
+      "STRIPE_SECRET_KEY is not set. Configure it in .env.local (dev) or Vercel project env (prod)."
+    );
+  }
+  cached = new Stripe(key, {
+    apiVersion: "2026-04-22.dahlia",
+    typescript: true,
+  });
+  return cached;
+}
 
 export function getSiteUrl(): string {
   return (

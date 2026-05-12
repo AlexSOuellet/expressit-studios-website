@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 // Stripe needs the raw request body to verify the signature.
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(rawBody, signature, secret);
+    event = getStripe().webhooks.constructEvent(rawBody, signature, secret);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid signature.";
     return NextResponse.json({ error: message }, { status: 400 });
