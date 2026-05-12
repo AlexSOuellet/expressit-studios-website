@@ -1,11 +1,11 @@
 -- ExpressIt Studios — Phase 2 order system schema.
--- Idempotent: drops public schema entirely so re-running gives a clean slate.
--- Run via Supabase Dashboard → SQL Editor → paste → Run.
+-- Idempotent: only drops objects this migration owns. Leaves the public
+-- schema's Supabase-managed grants and helpers in place.
 
-drop schema if exists public cascade;
-create schema public;
-grant usage on schema public to anon, authenticated, service_role;
-grant all on schema public to postgres, service_role;
+drop table if exists uploads cascade;
+drop table if exists orders cascade;
+drop type if exists order_status cascade;
+drop function if exists set_updated_at cascade;
 
 -- ---------------------------------------------------------------
 -- orders
@@ -78,7 +78,6 @@ alter table uploads enable row level security;
 
 -- ---------------------------------------------------------------
 -- Storage bucket for customer photo uploads
--- Created here so it lives in source control. Re-runnable.
 -- ---------------------------------------------------------------
 insert into storage.buckets (id, name, public)
 values ('order-uploads', 'order-uploads', false)
