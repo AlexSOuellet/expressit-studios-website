@@ -90,7 +90,43 @@ Copied a curated set under `public/` from `C:\Projects\Etsy Listings\`:
 | Real ExpressIt logo (currently wordmark) | Alex | Optional |
 | Deploy to Vercel | Both | Connect GitHub repo, env vars, point DNS |
 | Switch Stripe to live mode | Alex | Live API keys in Vercel, enable Stripe Tax |
-| Phase 2 (deferred) | Both | Order tracking, photo uploads, transactional emails, admin |
+| Phase 2 — Order system (next session) | Both | Decided to build, not deferred. See "Phase 2 plan" below. |
+
+## Phase 2 plan — Order system
+
+Alex confirmed (end of 2026-05-11 session) he wants a real order experience for v1, not "manual via email." Scoped for the next working session.
+
+### Stack additions
+- **Supabase** (free tier) — Postgres for orders, Storage for customer photo uploads, Auth (magic-link) for customer access to their order page. Free tier (500MB Postgres / 1GB Storage / 5GB bandwidth) covers ExpressIt scale indefinitely.
+- **Resend** (free tier — 100 emails/day) — transactional emails: order received, photos received, status change, video delivered.
+- **Vercel Analytics** — pageviews + web vitals, one-line enable.
+
+### What gets ADDED (none of the existing storefront changes)
+- Stripe webhook route that inserts an `orders` row when a charge succeeds
+- `/order/[id]` — customer order page (gated by magic-link auth), shows status + photo upload form
+- `/admin` — gated by allowlist of Alex's email(s) in env var, lists orders, lets him change status, view uploaded photos, download
+- Email templates triggered on status changes
+- Photos uploaded to Supabase Storage (NOT into the repo — fixes long-term media-in-git concern)
+
+### Schema sketch (firmed up next session)
+- `orders` — id, stripe_session_id, customer_email, product_slug, variant_id, options (jsonb), price_cents, status, created_at
+  - Status enum: `awaiting_photos | photos_received | in_editing | revisions_requested | delivered`
+- `uploads` — order_id, storage_path, original_filename, uploaded_at
+- Optional later: `messages` table for in-app customer ↔ studio thread
+
+### Work order for next session
+1. Supabase project + schema + env vars wired into `.env.local`
+2. Stripe webhook → write order row
+3. Magic-link auth + customer order page (`/order/[id]`)
+4. Photo upload form (direct-to-Supabase-Storage signed URLs)
+5. Admin dashboard (`/admin`)
+6. Resend emails on status transitions
+7. Vercel Analytics enable
+
+### Architecture decisions captured from this session
+- **No DB conversion risk.** The storefront stays file-based (products in MDX, photos/videos in `public/`). Adding Supabase is purely additive — new routes alongside the existing ones, no rewrites.
+- **Products will stay in MDX forever.** Alex confirmed ExpressIt will never reach the SKU count where a `products` table earns its keep.
+- **Media-in-repo is fine for v1.** Total ~76MB, largest file 19MB, well under GitHub limits. When sample-video library grows past comfortable, move just videos to Cloudflare Stream or Vimeo (not images).
 
 ## Important conventions
 
