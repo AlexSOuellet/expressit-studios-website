@@ -67,21 +67,27 @@
 - ✅ `NEXT_PUBLIC_SITE_URL` updated to `https://expressitstudios.com` and prod redeployed
 - ✅ Resend domain `expressitstudios.com` verified (auto-configured via Cloudflare OAuth). Sends via `send.expressitstudios.com` subdomain. DKIM = `resend._domainkey`.
 - ✅ Gmail "Send mail as" `alex@expressitstudios.com` via Resend SMTP (`smtp.resend.com:587`, user `resend`, password = Resend API key `gmail-smtp` scoped to expressitstudios.com). Gmail set to auto-reply from same address.
+- ✅ `/contact` page live with form (`src/components/site/contact-form.tsx` → `POST /api/contact` → `Resend` SDK → `alex@expressitstudios.com`). Honeypot + Zod validation. From `noreply@expressitstudios.com`, reply-to is the submitter. Linked in header nav, footer, sitemap.
+- ✅ `RESEND_API_KEY` set in Vercel **Production** (reused the `gmail-smtp` key — same `Sending access` scope). **Not set in Preview** — Vercel CLI has a non-interactive bug adding to "all preview branches"; not blocking since no preview deploys are active. Add via dashboard if/when needed.
+- ✅ Email replaced site-wide: `AlexSOuellet@gmail.com` → `alex@expressitstudios.com` on `/privacy`, `/terms`, `/refund`, `/checkout/success`, `/process`, and both product MDX files.
 - ⏳ Stripe LIVE mode (waits on Alex enabling tax + final QA on prod)
 
 ## Open items — priority order for next session
 
-1. **Add a `/contact` page** Alex asked for. Should match the rest of the site (hero band + content). Needs:
-   - Email link to `alex@expressitstudios.com` (or fall back to Gmail until email routing is verified)
-   - Optional simple form (POST → Resend transactional email to Alex). Skip the form if it'd slow this down; mailto link is enough for v1.
-   - Add to header nav + footer + sitemap.
-2. **Replace `AlexSOuellet@gmail.com` references** with `alex@expressitstudios.com` across `/privacy`, `/terms`, `/refund`, `/checkout/success`. One find-and-replace (routing is live, safe to do now).
-3. **End-to-end prod test**: buy something on the deployed URL with `4242 4242 4242 4242`, confirm a row lands in Supabase. Already verified the same flow against `localhost`, but doing it against prod catches any URL/env-var misconfig.
-4. **Resume Phase 2 steps 3–7** in order. (Resend is now wired for Phase 2 step 6 — domain verified, API key available.)
+1. **End-to-end prod test**: buy something on https://expressitstudios.com with test card `4242 4242 4242 4242`, confirm a row lands in Supabase `orders` table. Already verified locally — this catches any prod URL/env-var misconfig.
+2. **Smoke-test the live contact form**: submit it from https://expressitstudios.com/contact, confirm the email arrives. (Form already verified end-to-end against `localhost`, but production uses the Vercel-side `RESEND_API_KEY`.)
+3. **Resume Phase 2 steps 3–7** in order:
+   - Step 3 — Magic-link auth + `/order/[id]` customer page
+   - Step 4 — Photo upload form (direct-to-Supabase signed URLs)
+   - Step 5 — `/admin` dashboard (email-allowlist gated, `ADMIN_EMAILS` env)
+   - Step 6 — Resend transactional emails on status transitions (`getResend()` already wired in `src/lib/resend.ts`)
+   - Step 7 — Vercel Analytics enable
+4. **Stripe LIVE mode** when ready: enable tax in Stripe → swap test keys for live keys in Vercel → final QA.
+5. **Housekeeping**: clean up the stray worktree at `.claude/worktrees/lucid-yalow-09a1bd` (`git worktree remove` + `git branch -D claude/lucid-yalow-09a1bd`). Came from a previous Claude session.
 
 ## Important conventions
 
-- **Server-side singletons.** Both `getStripe()` (`src/lib/stripe.ts`) and `supabaseAdmin()` (`src/lib/supabase/server.ts`) are lazy-initialized. Do **not** instantiate Stripe or Supabase at module load — Next.js 16 collects page data in worker processes that don't reliably inherit env vars and the build fails. This is why early Vercel builds failed.
+- **Server-side singletons.** `getStripe()` (`src/lib/stripe.ts`), `supabaseAdmin()` (`src/lib/supabase/server.ts`), and `getResend()` (`src/lib/resend.ts`) are all lazy-initialized. Do **not** instantiate these clients at module load — Next.js 16 collects page data in worker processes that don't reliably inherit env vars and the build fails. This is why early Vercel builds failed.
 - **Products live in MDX** at `src/content/products/*.md`. Schema enforced via Zod (`src/lib/products/schema.ts`). Validated at build time by `scripts/validate-products.mjs` (runs as `prebuild`).
 - **Prices in cents** (Stripe convention). `formatPrice(cents)` helper in schema.
 - **Variants** = priced SKUs (matrix). **Options** = non-pricing customer selections (e.g. occasion). Both go into Stripe metadata for fulfillment.
@@ -95,7 +101,7 @@
 - `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`
 - `NEXT_PUBLIC_SITE_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
-- `RESEND_API_KEY` (not yet used)
+- `RESEND_API_KEY` — used by `/api/contact` and (future) order status emails. Domain `expressitstudios.com` is verified in Resend. From address = `noreply@expressitstudios.com`. To rotate, generate a new key with Sending access scoped to the domain.
 - `ADMIN_EMAILS` (comma-separated, gates future `/admin`)
 
 ## CLIs available (all authenticated)

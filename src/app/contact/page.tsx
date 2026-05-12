@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import { Mail, Clock, MessageCircle } from "lucide-react";
+import { Clock, MessageCircle } from "lucide-react";
+import { ContactForm } from "@/components/site/contact-form";
 
 export const metadata: Metadata = {
   title: "Contact",
   description:
-    "Get in touch with ExpressIt Studios. Questions, custom requests, or anything else — email us at alex@expressitstudios.com.",
+    "Get in touch with ExpressIt Studios. Questions about a project, custom requests, or anything else — send us a message.",
 };
-
-const CONTACT_EMAIL = "alex@expressitstudios.com";
 
 export default function ContactPage() {
   return (
@@ -22,35 +21,14 @@ export default function ContactPage() {
           </h1>
           <p className="font-body text-body-lg text-on-surface-variant">
             Questions about a project, custom requests, or anything else —
-            we read every email and reply fast.
+            send us a message. We read every one and reply fast.
           </p>
         </div>
       </section>
 
       <section className="px-margin-mobile md:px-margin-desktop pb-24">
-        <div className="max-w-2xl mx-auto glass-card rounded-xl p-12 text-center">
-          <Mail
-            className="h-12 w-12 text-primary mx-auto mb-6"
-            aria-hidden="true"
-          />
-          <h2 className="font-headline text-headline-md text-on-surface mb-3">
-            Email Us
-          </h2>
-          <a
-            href={`mailto:${CONTACT_EMAIL}`}
-            className="font-body text-body-lg text-primary hover:underline break-all"
-          >
-            {CONTACT_EMAIL}
-          </a>
-          <div className="mt-8">
-            <a
-              href={`mailto:${CONTACT_EMAIL}`}
-              className="primary-gradient text-on-primary-fixed font-mono text-ui-mono px-8 py-3 rounded-lg uppercase inline-flex items-center gap-2"
-            >
-              <Mail className="h-4 w-4" aria-hidden="true" />
-              Open Email
-            </a>
-          </div>
+        <div className="max-w-2xl mx-auto">
+          <ContactForm />
         </div>
 
         <div className="max-w-4xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 gap-gutter">
