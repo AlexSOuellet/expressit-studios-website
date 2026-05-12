@@ -58,26 +58,26 @@
 ### Deploy
 - ✅ Vercel project linked, env vars set for Production + Preview (Stripe test keys, Supabase, Resend placeholder, `ADMIN_EMAILS`)
 - ✅ Repo flipped to **public** (Vercel Hobby plan blocks deploys from non-team git authors on private repos — the cleanest fix; nothing secret in the codebase)
-- ✅ Production deployment live at https://expressit-studios-website.vercel.app
+- ✅ Production deployment live at https://expressitstudios.com (custom domain + www, HTTPS)
 - ✅ Stripe test webhook configured for the Vercel URL
-- ⏳ Custom domain `expressitstudios.com` not yet pointed (Cloudflare DNS still propagating)
-- ⏳ Cloudflare Email Routing not yet configured (same)
+- ✅ Cloudflare DNS: root + www A records → `76.76.21.21` (DNS-only); Vercel SSL provisioned
+- ✅ Cloudflare Email Routing enabled — MX/SPF/DKIM records added by Cloudflare
+  - Rule: `alex@expressitstudios.com → AlexSOuellet@gmail.com`
+  - Catchall: `*@expressitstudios.com → AlexSOuellet@gmail.com`
+- ✅ `NEXT_PUBLIC_SITE_URL` updated to `https://expressitstudios.com` and prod redeployed
+- ✅ Resend domain `expressitstudios.com` verified (auto-configured via Cloudflare OAuth). Sends via `send.expressitstudios.com` subdomain. DKIM = `resend._domainkey`.
+- ✅ Gmail "Send mail as" `alex@expressitstudios.com` via Resend SMTP (`smtp.resend.com:587`, user `resend`, password = Resend API key `gmail-smtp` scoped to expressitstudios.com). Gmail set to auto-reply from same address.
 - ⏳ Stripe LIVE mode (waits on Alex enabling tax + final QA on prod)
 
 ## Open items — priority order for next session
 
-1. **Confirm Cloudflare DNS propagation**: `nslookup expressitstudios.com` should return Cloudflare-controlled IPs. If active, the Cloudflare dashboard for the domain shows "Active" instead of "Pending Nameserver Update". (Could already be done by the time the next session starts.)
-2. **Set up Cloudflare Email Routing** so `alex@expressitstudios.com` forwards to `AlexSOuellet@gmail.com`. Add destination + routing rule. Then Gmail → Settings → Accounts → "Send mail as" → verify.
-3. **Point `expressitstudios.com` and `www.expressitstudios.com` at Vercel.** Two clean paths:
-   - Easiest: add the domain to the Vercel project (`vercel domains add expressitstudios.com`), Vercel tells us the CNAME/A records, add those in Cloudflare DNS (set proxy status to **DNS only / gray cloud** so Vercel can verify), wait a minute, SSL provisions automatically.
-   - Once verified, update `NEXT_PUBLIC_SITE_URL` in Vercel to `https://expressitstudios.com` and redeploy.
-4. **Add a `/contact` page** Alex asked for. Should match the rest of the site (hero band + content). Needs:
+1. **Add a `/contact` page** Alex asked for. Should match the rest of the site (hero band + content). Needs:
    - Email link to `alex@expressitstudios.com` (or fall back to Gmail until email routing is verified)
    - Optional simple form (POST → Resend transactional email to Alex). Skip the form if it'd slow this down; mailto link is enough for v1.
    - Add to header nav + footer + sitemap.
-5. **Replace `AlexSOuellet@gmail.com` references** with `alex@expressitstudios.com` across `/privacy`, `/terms`, `/refund`, `/checkout/success` once email routing is verified. One find-and-replace.
-6. **End-to-end prod test**: buy something on the deployed URL with `4242 4242 4242 4242`, confirm a row lands in Supabase. Already verified the same flow against `localhost`, but doing it against prod catches any URL/env-var misconfig.
-7. **Resume Phase 2 steps 3–7** in order.
+2. **Replace `AlexSOuellet@gmail.com` references** with `alex@expressitstudios.com` across `/privacy`, `/terms`, `/refund`, `/checkout/success`. One find-and-replace (routing is live, safe to do now).
+3. **End-to-end prod test**: buy something on the deployed URL with `4242 4242 4242 4242`, confirm a row lands in Supabase. Already verified the same flow against `localhost`, but doing it against prod catches any URL/env-var misconfig.
+4. **Resume Phase 2 steps 3–7** in order. (Resend is now wired for Phase 2 step 6 — domain verified, API key available.)
 
 ## Important conventions
 

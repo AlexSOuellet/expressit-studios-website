@@ -103,10 +103,10 @@ export default function PrivacyPage() {
           You can request a copy of the personal data we hold about you, or
           ask us to delete it, by emailing{" "}
           <a
-            href="mailto:AlexSOuellet@gmail.com"
+            href="mailto:alex@expressitstudios.com"
             className="text-primary hover:underline"
           >
-            AlexSOuellet@gmail.com
+            alex@expressitstudios.com
           </a>
           . We will respond within 30 days.
         </p>
@@ -134,10 +134,10 @@ export default function PrivacyPage() {
         <p>
           Questions? Email{" "}
           <a
-            href="mailto:AlexSOuellet@gmail.com"
+            href="mailto:alex@expressitstudios.com"
             className="text-primary hover:underline"
           >
-            AlexSOuellet@gmail.com
+            alex@expressitstudios.com
           </a>
           .
         </p>

@@ -110,4 +110,4 @@ Launching a collection or running a full campaign? The 3-video bundle saves you 
 
 ---
 
-*Need a custom length, vertical *and* horizontal versions, or animation outside this menu? [Message us](mailto:AlexSOuellet@gmail.com) — we'll quote a custom build.*
+*Need a custom length, vertical *and* horizontal versions, or animation outside this menu? [Message us](mailto:alex@expressitstudios.com) — we'll quote a custom build.*

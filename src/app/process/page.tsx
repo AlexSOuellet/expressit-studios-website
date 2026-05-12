@@ -100,7 +100,7 @@ export default function ProcessPage() {
             how to send us your photos.
           </p>
           <a
-            href="mailto:AlexSOuellet@gmail.com"
+            href="mailto:alex@expressitstudios.com"
             className="primary-gradient text-on-primary-fixed font-mono text-ui-mono px-8 py-3 rounded-lg uppercase inline-flex items-center gap-2"
           >
             Email Us

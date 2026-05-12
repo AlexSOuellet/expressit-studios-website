@@ -38,10 +38,10 @@ export default function RefundPage() {
           If you change your mind before we&rsquo;ve started production on
           your video, email us at{" "}
           <a
-            href="mailto:AlexSOuellet@gmail.com"
+            href="mailto:alex@expressitstudios.com"
             className="text-primary hover:underline"
           >
-            AlexSOuellet@gmail.com
+            alex@expressitstudios.com
           </a>{" "}
           and we&rsquo;ll issue a full refund. Production typically begins
           within a few hours of receiving your photos and order details, so
@@ -105,10 +105,10 @@ export default function RefundPage() {
           chargeback without first contacting us is not necessary —
           we&rsquo;re happy to resolve any issue quickly. Email{" "}
           <a
-            href="mailto:AlexSOuellet@gmail.com"
+            href="mailto:alex@expressitstudios.com"
             className="text-primary hover:underline"
           >
-            AlexSOuellet@gmail.com
+            alex@expressitstudios.com
           </a>
           .
         </p>

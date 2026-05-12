@@ -48,10 +48,10 @@ export default async function CheckoutSuccessPage({
               <p className="font-body text-body-md text-on-surface-variant mt-3">
                 Or email{" "}
                 <a
-                  href="mailto:AlexSOuellet@gmail.com"
+                  href="mailto:alex@expressitstudios.com"
                   className="text-primary hover:underline"
                 >
-                  AlexSOuellet@gmail.com
+                  alex@expressitstudios.com
                 </a>{" "}
                 directly. We&rsquo;ll have your finished video back in 24–48
                 hours.

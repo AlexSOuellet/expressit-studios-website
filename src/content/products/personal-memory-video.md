@@ -88,4 +88,4 @@ Send us the photos that matter — your pet, the birthday, the announcement, the
 
 ---
 
-*Need something longer or a custom edit style? [Message us](mailto:AlexSOuellet@gmail.com) — happy to quote a one-off build.*
+*Need something longer or a custom edit style? [Message us](mailto:alex@expressitstudios.com) — happy to quote a one-off build.*

@@ -130,10 +130,10 @@ export default function TermsPage() {
         <p>
           Email{" "}
           <a
-            href="mailto:AlexSOuellet@gmail.com"
+            href="mailto:alex@expressitstudios.com"
             className="text-primary hover:underline"
           >
-            AlexSOuellet@gmail.com
+            alex@expressitstudios.com
           </a>{" "}
           with any questions.
         </p>
