@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: "/personal", label: "Personal" },
   { href: "/process", label: "Process" },
   { href: "/blog", label: "Blog" },
+  { href: "/contact", label: "Contact" },
 ] as const;
 
 function isActive(pathname: string, href: string): boolean {
