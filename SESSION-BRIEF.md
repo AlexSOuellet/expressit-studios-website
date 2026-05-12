@@ -1,37 +1,109 @@
 # ExpressIt Studios Website — Session Brief
 
-> Read this at the start of every session. Updated 2026-05-11 (post-polish).
+> Read this at the start of every session. Updated 2026-05-12 (post-deploy).
+
+## Start-of-session checklist for the assistant
+
+1. We work in `C:\Projects\ExpressIt Studios\Website` directly on `main`. **No git worktrees** — they previously stranded commits on side branches that never merged back.
+2. Make sure the dev server is running on port 3000 (`npm run dev` in background). The CLIs `stripe`, `supabase`, `vercel`, `gh` are all wired up and authenticated for this project.
+3. Take action with available tools instead of walking Alex through dashboards. If a tool is missing, install it. The only steps Alex must do himself are browser-OAuth logins he hasn't done before.
+4. Keep responses terse.
 
 ## What this is
 
-`expressitstudios.com` — the new ecommerce storefront replacing Etsy for ExpressIt Studios. Alex sells custom photo-to-video edits: business product ads and personal memory videos.
-
-Forked nothing — built from scratch this session.
+`expressitstudios.com` — ecommerce storefront replacing Etsy. Alex sells custom photo-to-video edits: business product ads ($35–$200) and personal memory videos ($24.99).
 
 ## Stack
 
 - **Next.js 16** (App Router, Turbopack) + **React 19** + **TypeScript** (strict)
 - **Tailwind v4** — design tokens in `src/app/globals.css` under `@theme`
-- **Zod** for product schema validation
-- **gray-matter** + **react-markdown** for MDX-style content collections
+- **Zod** for product schema validation; **gray-matter** + **react-markdown** for MDX content
 - **Stripe Checkout** (inline pricing, no Stripe-side products)
-- **lucide-react** icons, **next/font** for Bebas Neue / Geist / JetBrains Mono
-- Deployment target: **Vercel** + GoDaddy DNS → `expressitstudios.com`
+- **Supabase** (Postgres + Storage + Auth) — Phase 2 order system
+- **Resend** — transactional emails (not yet wired)
+- **Vercel** hosting; **Cloudflare** for DNS + email routing (in-flight); **GoDaddy** still registers the domain
+- **lucide-react** icons, **next/font** (Bebas Neue / Geist / JetBrains Mono)
 
-## What's done (Phase 1 foundation)
+## Production URLs + project refs
 
-| Area | Status |
+| Thing | Value |
 |---|---|
-| Project scaffolded, GitHub repo live | ✅ https://github.com/AlexSOuellet/expressit-studios-website |
-| Design system tokens from `_reference/DESIGN.md` | ✅ ported to Tailwind v4 `@theme` |
-| Fonts | ✅ Bebas Neue, Geist, JetBrains Mono via next/font |
-| Product catalog | ✅ 2 products (`business-product-video-ad.md`, `personal-memory-video.md`) in `src/content/products/` |
-| Product schema | ✅ `src/lib/products/schema.ts` (Zod) with variants + options + axes |
-| Pages | ✅ `/`, `/business`, `/personal`, `/products/[slug]`, `/process`, `/blog`, `/blog/[slug]`, `/privacy`, `/terms`, `/refund`, `/checkout/success` |
-| Stripe checkout API | ✅ `/api/checkout/route.ts` — sends to Stripe Checkout with metadata + Stripe Tax |
-| SEO | ✅ sitemap.ts, robots.ts, JSON-LD product structured data, OG metadata per page |
-| Validation | ✅ `npm run check:products` + `prebuild` hook |
-| Production build | ✅ passes clean, 18 routes |
+| GitHub repo (public) | https://github.com/AlexSOuellet/expressit-studios-website |
+| Vercel project | alex-ouellet-s-projects/expressit-studios-website |
+| Vercel preview URL | https://expressit-studios-website.vercel.app |
+| Custom domain (pending DNS) | https://expressitstudios.com |
+| Supabase project ref | `apxvlpdnfxqkcoyroaer` |
+| Supabase URL | https://apxvlpdnfxqkcoyroaer.supabase.co |
+| Stripe webhook (test mode) | "Vercel preview" — fires on `checkout.session.completed` → `/api/stripe/webhook` |
+| Cloudflare account | alex's Gmail (created 2026-05-12, free plan) |
+| Cloudflare nameservers | `amanda.ns.cloudflare.com`, `ricardo.ns.cloudflare.com` (set at GoDaddy 2026-05-12 ~1:00 PM ET, propagating) |
+
+## What's done
+
+### Phase 1 — storefront
+- Project scaffolded, design tokens, fonts, product catalog (2 products in MDX), Zod schema, all storefront pages, Stripe Checkout, SEO (sitemap/robots/JSON-LD), product validation in `prebuild` hook.
+- Visual decisions all locked in (hero, tracks, business/personal pages, product gallery). See git log for specifics.
+
+### Phase 2 — order system (steps 1–2 done)
+| Step | Status |
+|---|---|
+| 1. Supabase project + schema (`orders`, `uploads`, `order_status` enum, RLS on, `order-uploads` private bucket) | ✅ |
+| 2. Stripe webhook `/api/stripe/webhook` → upserts orders row on `checkout.session.completed` | ✅ verified end-to-end locally and now in prod |
+| 3. Magic-link auth + `/order/[id]` customer page | ⏳ |
+| 4. Photo upload form (direct-to-Supabase signed URLs) | ⏳ |
+| 5. `/admin` dashboard (email-allowlist gated) | ⏳ |
+| 6. Resend emails on status transitions | ⏳ |
+| 7. Vercel Analytics enable | ⏳ |
+
+### Deploy
+- ✅ Vercel project linked, env vars set for Production + Preview (Stripe test keys, Supabase, Resend placeholder, `ADMIN_EMAILS`)
+- ✅ Repo flipped to **public** (Vercel Hobby plan blocks deploys from non-team git authors on private repos — the cleanest fix; nothing secret in the codebase)
+- ✅ Production deployment live at https://expressit-studios-website.vercel.app
+- ✅ Stripe test webhook configured for the Vercel URL
+- ⏳ Custom domain `expressitstudios.com` not yet pointed (Cloudflare DNS still propagating)
+- ⏳ Cloudflare Email Routing not yet configured (same)
+- ⏳ Stripe LIVE mode (waits on Alex enabling tax + final QA on prod)
+
+## Open items — priority order for next session
+
+1. **Confirm Cloudflare DNS propagation**: `nslookup expressitstudios.com` should return Cloudflare-controlled IPs. If active, the Cloudflare dashboard for the domain shows "Active" instead of "Pending Nameserver Update". (Could already be done by the time the next session starts.)
+2. **Set up Cloudflare Email Routing** so `alex@expressitstudios.com` forwards to `AlexSOuellet@gmail.com`. Add destination + routing rule. Then Gmail → Settings → Accounts → "Send mail as" → verify.
+3. **Point `expressitstudios.com` and `www.expressitstudios.com` at Vercel.** Two clean paths:
+   - Easiest: add the domain to the Vercel project (`vercel domains add expressitstudios.com`), Vercel tells us the CNAME/A records, add those in Cloudflare DNS (set proxy status to **DNS only / gray cloud** so Vercel can verify), wait a minute, SSL provisions automatically.
+   - Once verified, update `NEXT_PUBLIC_SITE_URL` in Vercel to `https://expressitstudios.com` and redeploy.
+4. **Add a `/contact` page** Alex asked for. Should match the rest of the site (hero band + content). Needs:
+   - Email link to `alex@expressitstudios.com` (or fall back to Gmail until email routing is verified)
+   - Optional simple form (POST → Resend transactional email to Alex). Skip the form if it'd slow this down; mailto link is enough for v1.
+   - Add to header nav + footer + sitemap.
+5. **Replace `AlexSOuellet@gmail.com` references** with `alex@expressitstudios.com` across `/privacy`, `/terms`, `/refund`, `/checkout/success` once email routing is verified. One find-and-replace.
+6. **End-to-end prod test**: buy something on the deployed URL with `4242 4242 4242 4242`, confirm a row lands in Supabase. Already verified the same flow against `localhost`, but doing it against prod catches any URL/env-var misconfig.
+7. **Resume Phase 2 steps 3–7** in order.
+
+## Important conventions
+
+- **Server-side singletons.** Both `getStripe()` (`src/lib/stripe.ts`) and `supabaseAdmin()` (`src/lib/supabase/server.ts`) are lazy-initialized. Do **not** instantiate Stripe or Supabase at module load — Next.js 16 collects page data in worker processes that don't reliably inherit env vars and the build fails. This is why early Vercel builds failed.
+- **Products live in MDX** at `src/content/products/*.md`. Schema enforced via Zod (`src/lib/products/schema.ts`). Validated at build time by `scripts/validate-products.mjs` (runs as `prebuild`).
+- **Prices in cents** (Stripe convention). `formatPrice(cents)` helper in schema.
+- **Variants** = priced SKUs (matrix). **Options** = non-pricing customer selections (e.g. occasion). Both go into Stripe metadata for fulfillment.
+- **No newsletter form** — hidden in Phase 1.
+- **All routes** documented in `src/app/sitemap.ts`.
+- **Supabase migrations** live in `supabase/migrations/`. Apply with `npx supabase db push --include-all`. CLI is logged in and the project is linked (`.vercel/` and `supabase/.temp/` git-ignored).
+- **Repo is public.** Don't commit secrets. `.env*` (except `.env.example`) is gitignored.
+
+## Env vars (canonical list, see `.env.example`)
+
+- `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`
+- `NEXT_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
+- `RESEND_API_KEY` (not yet used)
+- `ADMIN_EMAILS` (comma-separated, gates future `/admin`)
+
+## CLIs available (all authenticated)
+
+- `gh` — GitHub CLI
+- `stripe` — Stripe CLI (locally paired with ExpressIt Stripe account; Rhody Strong will need re-pairing when Alex switches back to that project)
+- `npx supabase` — linked to project `apxvlpdnfxqkcoyroaer`
+- `npx vercel` — linked to `alex-ouellet-s-projects/expressit-studios-website`
 
 ## Pricing matrix (locked)
 
@@ -44,125 +116,26 @@ Forked nothing — built from scratch this session.
 
 **Custom Memory Video** (personal) — flat **$24.99**, customer picks occasion (Pet / Birthday / Gender Reveal / Anniversary / Wedding / Memorial / Other).
 
-## Visual decisions made
-
-**Home**
-- Hero: AI-generated cinematic studio image at `public/hero/studio.png`, `min-h-screen`, opacity-40, image bleeds 140vh down into Tracks for a continuous cinematic feel.
-- Headline: "Still Photos *Cinematic* Stories" — no punctuation, "Cinematic" italic primary cyan
-- Tracks: two cards, `h-[400px]`, `TRACK 01 / TRACK 02` eyebrow labels, no section header (cards directly under hero)
-- Process: eyebrow "The Cinematic Workflow" + headline "Seamless Creation"; steps Upload / AI Enhancement / Delivery; "high resolution within 48 hours"
-- Header: solid bg, white wordmark, centered nav with active-page underline, "Start Project" CTA right
-
-**Business + Personal listing pages**
-- Hero with banner bg + bleed gradient (60vh)
-- Sample reels: 3 looping silent videos in a `9/16` grid from `public/samples/{business,personal}/`
-- Stills / Occasions grid: 6 frames each from `public/examples/{business,personal}/`
-- Before & after: 2 (business) / 4 (personal) wide images
-- Single product as a horizontal feature card (image left, content right) via `<ProductCard layout="horizontal" />`
-
-**Product detail (`/products/[slug]`)**
-- Manual slideshow: 4:3 aspect, prev/next chevrons (visible on hover), dot indicators, click-to-jump thumbnail strip
-- Supports `.mp4`/`.webm`/`.mov` in the `images:` field — autoplay+loop+muted when active. Currently each product leads with a sample reel.
-- Sticky on `lg` viewports so the gallery stays visible while reading the right column.
-
-## Real media (from Etsy assets)
-
-Copied a curated set under `public/` from `C:\Projects\Etsy Listings\`:
-
-- `public/hero/business.png` + `public/hero/personal.png` — carousel banners (⚠ have promotional text overlay — see open items)
-- `public/samples/business/` — `hyper-motion.mp4`, `tv-spot-1.mp4`, `tv-spot-2.mp4`
-- `public/samples/personal/` — `scrappydoo.mp4`, `pet.mp4` (slowlucy), `gender-reveal.mp4`
-- `public/examples/business/` — 6 stills + 2 before/afters
-- `public/examples/personal/` — 6 stills + 4 before/afters
-
-**Do not use Magnetic Smiles files** — that's a real customer; reserved for a future gallery feature.
-
-## Open items / next steps
-
-| Task | Owner | Notes |
-|---|---|---|
-| Replace hero bg for Business + Personal pages | Both | `public/hero/business.png` and `public/hero/personal.png` are Etsy carousel banners with promo text ("Celebrate Big Moments", "SHOP CELEBRATIONS") baked in. Either swap for clean atmospheric stills or drop the bg image and revert to gradient-only hero. |
-| Set Stripe test keys in `.env.local` | Alex | `STRIPE_SECRET_KEY=sk_test_...` + `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...` |
-| Test checkout end-to-end in test mode | Both | Card `4242 4242 4242 4242` |
-| Review product Markdown copy in `src/content/products/` | Alex | Voice + accuracy |
-| Review legal pages (`/privacy`, `/terms`, `/refund`) | Alex | Lawyer review eventually; uses Gmail temporarily |
-| Set up Cloudflare Email Routing for `@expressitstudios.com` | Alex | Move DNS GoDaddy → Cloudflare, route to Gmail, set up Gmail "Send As" |
-| Real ExpressIt logo (currently wordmark) | Alex | Optional |
-| Deploy to Vercel | Both | Connect GitHub repo, env vars, point DNS |
-| Switch Stripe to live mode | Alex | Live API keys in Vercel, enable Stripe Tax |
-| Phase 2 — Order system (next session) | Both | Decided to build, not deferred. See "Phase 2 plan" below. |
-
-## Phase 2 plan — Order system
-
-Alex confirmed (end of 2026-05-11 session) he wants a real order experience for v1, not "manual via email." Scoped for the next working session.
-
-### Stack additions
-- **Supabase** (free tier) — Postgres for orders, Storage for customer photo uploads, Auth (magic-link) for customer access to their order page. Free tier (500MB Postgres / 1GB Storage / 5GB bandwidth) covers ExpressIt scale indefinitely.
-- **Resend** (free tier — 100 emails/day) — transactional emails: order received, photos received, status change, video delivered.
-- **Vercel Analytics** — pageviews + web vitals, one-line enable.
-
-### What gets ADDED (none of the existing storefront changes)
-- Stripe webhook route that inserts an `orders` row when a charge succeeds
-- `/order/[id]` — customer order page (gated by magic-link auth), shows status + photo upload form
-- `/admin` — gated by allowlist of Alex's email(s) in env var, lists orders, lets him change status, view uploaded photos, download
-- Email templates triggered on status changes
-- Photos uploaded to Supabase Storage (NOT into the repo — fixes long-term media-in-git concern)
-
-### Schema sketch (firmed up next session)
-- `orders` — id, stripe_session_id, customer_email, product_slug, variant_id, options (jsonb), price_cents, status, created_at
-  - Status enum: `awaiting_photos | photos_received | in_editing | revisions_requested | delivered`
-- `uploads` — order_id, storage_path, original_filename, uploaded_at
-- Optional later: `messages` table for in-app customer ↔ studio thread
-
-### Work order for next session
-1. Supabase project + schema + env vars wired into `.env.local`
-2. Stripe webhook → write order row
-3. Magic-link auth + customer order page (`/order/[id]`)
-4. Photo upload form (direct-to-Supabase-Storage signed URLs)
-5. Admin dashboard (`/admin`)
-6. Resend emails on status transitions
-7. Vercel Analytics enable
-
-### Architecture decisions captured from this session
-- **No DB conversion risk.** The storefront stays file-based (products in MDX, photos/videos in `public/`). Adding Supabase is purely additive — new routes alongside the existing ones, no rewrites.
-- **Products will stay in MDX forever.** Alex confirmed ExpressIt will never reach the SKU count where a `products` table earns its keep.
-- **Media-in-repo is fine for v1.** Total ~76MB, largest file 19MB, well under GitHub limits. When sample-video library grows past comfortable, move just videos to Cloudflare Stream or Vimeo (not images).
-
-## Important conventions
-
-- **Products live in MDX** at `src/content/products/*.md`. Schema enforced via Zod (`src/lib/products/schema.ts`). Validated at build time by `scripts/validate-products.mjs` (runs as `prebuild`).
-- **Prices in cents** (Stripe convention). `formatPrice(cents)` helper in schema.
-- **Variants** = priced SKUs (matrix). **Options** = non-pricing customer selections (e.g. occasion). Both go into Stripe metadata for fulfillment.
-- **Contact email**: temporarily `AlexSOuellet@gmail.com` in legal pages and success page. Will switch to `@expressitstudios.com` later. One find-and-replace.
-- **No newsletter form** — hidden in Phase 1.
-- **All routes** documented in `src/app/sitemap.ts`.
-
-## How to run
-
-```
-cd "C:\Projects\ExpressIt Studios\Website"
-npm install
-cp .env.example .env.local   # then fill in Stripe keys
-npm run dev
-```
-
-Visit http://localhost:3000.
-
-## Scripts
-
-- `npm run dev` — Turbopack dev server
-- `npm run build` — production build (runs `check:products` first)
-- `npm run check:products` — validate product MDX frontmatter
-- `npm run lint`
-
 ## Memory rules (carry-forward)
 
 Saved at `~/.claude/projects/C--Projects-ExpressIt-Studios-Website/memory/`:
 
-- Only browse `ExpressIt Studios` and `Etsy Listings` folders — never RhodyStrong/BohdiCraft/etc.
-- Use Next.js + Vercel (not Astro/Cloudflare).
-- Build through agreed scope autonomously; check in at visible checkpoints.
+- Only browse `ExpressIt Studios` and `Etsy Listings` folders.
+- Use Next.js + Vercel (not Astro/Cloudflare for hosting; Cloudflare is DNS/email only).
+- Build autonomously through agreed scope; check in at visible checkpoints.
 - Keep responses terse.
+- **No worktrees** — commit directly on `main` in `C:\Projects\ExpressIt Studios\Website`.
+- **No shortcuts** — automate via CLI/API; don't walk Alex through dashboard UIs when a command works.
+
+## How to run locally
+
+```
+cd "C:\Projects\ExpressIt Studios\Website"
+npm install
+npm run dev
+```
+
+`.env.local` already has dev values. Visit http://localhost:3000.
 
 ## Where the assets came from
 
