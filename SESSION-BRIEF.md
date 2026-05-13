@@ -1,6 +1,6 @@
 # ExpressIt Studios Website — Session Brief
 
-> Read this at the start of every session. Updated 2026-05-12 (post-deploy).
+> Read this at the start of every session. Updated 2026-05-13 (post-audit + key rotation).
 
 ## Start-of-session checklist for the assistant
 
@@ -8,6 +8,7 @@
 2. Make sure the dev server is running on port 3000 (`npm run dev` in background). The CLIs `stripe`, `supabase`, `vercel`, `gh` are all wired up and authenticated for this project.
 3. Take action with available tools instead of walking Alex through dashboards. If a tool is missing, install it. The only steps Alex must do himself are browser-OAuth logins he hasn't done before.
 4. Keep responses terse.
+5. **Never ask Alex to paste a secret into chat.** Conversations live both on his disk and on Anthropic's servers — pasted keys are effectively leaked. If you need a key, have him set it himself (Vercel UI, edit `.env.local`, etc.) and verify by side-effect (e.g. POST to an endpoint that uses it) — not by reading it back. This rule was learned the hard way; see `project-docs/SECURITY-AUDIT-2026-05-12.md` C1.
 
 ## What this is
 
@@ -20,8 +21,8 @@
 - **Zod** for product schema validation; **gray-matter** + **react-markdown** for MDX content
 - **Stripe Checkout** (inline pricing, no Stripe-side products)
 - **Supabase** (Postgres + Storage + Auth) — Phase 2 order system
-- **Resend** — transactional emails (not yet wired)
-- **Vercel** hosting; **Cloudflare** for DNS + email routing (in-flight); **GoDaddy** still registers the domain
+- **Resend** — transactional emails (wired for `/api/contact`, ready for Phase 2 step 6)
+- **Vercel** hosting; **Cloudflare** for DNS + email routing (live); **GoDaddy** still registers the domain
 - **lucide-react** icons, **next/font** (Bebas Neue / Geist / JetBrains Mono)
 
 ## Production URLs + project refs
@@ -31,12 +32,13 @@
 | GitHub repo (public) | https://github.com/AlexSOuellet/expressit-studios-website |
 | Vercel project | alex-ouellet-s-projects/expressit-studios-website |
 | Vercel preview URL | https://expressit-studios-website.vercel.app |
-| Custom domain (pending DNS) | https://expressitstudios.com |
+| Custom domain (live) | https://expressitstudios.com |
 | Supabase project ref | `apxvlpdnfxqkcoyroaer` |
 | Supabase URL | https://apxvlpdnfxqkcoyroaer.supabase.co |
 | Stripe webhook (test mode) | "Vercel preview" — fires on `checkout.session.completed` → `/api/stripe/webhook` |
 | Cloudflare account | alex's Gmail (created 2026-05-12, free plan) |
-| Cloudflare nameservers | `amanda.ns.cloudflare.com`, `ricardo.ns.cloudflare.com` (set at GoDaddy 2026-05-12 ~1:00 PM ET, propagating) |
+| Cloudflare nameservers | `amanda.ns.cloudflare.com`, `ricardo.ns.cloudflare.com` (active since 2026-05-12) |
+| Resend account | Personal (alexsouellet@gmail.com login); domain `expressitstudios.com` verified |
 
 ## What's done
 
@@ -68,22 +70,35 @@
 - ✅ Resend domain `expressitstudios.com` verified (auto-configured via Cloudflare OAuth). Sends via `send.expressitstudios.com` subdomain. DKIM = `resend._domainkey`.
 - ✅ Gmail "Send mail as" `alex@expressitstudios.com` via Resend SMTP (`smtp.resend.com:587`, user `resend`, password = Resend API key `gmail-smtp` scoped to expressitstudios.com). Gmail set to auto-reply from same address.
 - ✅ `/contact` page live with form (`src/components/site/contact-form.tsx` → `POST /api/contact` → `Resend` SDK → `alex@expressitstudios.com`). Honeypot + Zod validation. From `noreply@expressitstudios.com`, reply-to is the submitter. Linked in header nav, footer, sitemap.
-- ✅ `RESEND_API_KEY` set in Vercel **Production** (reused the `gmail-smtp` key — same `Sending access` scope). **Not set in Preview** — Vercel CLI has a non-interactive bug adding to "all preview branches"; not blocking since no preview deploys are active. Add via dashboard if/when needed.
+- ✅ `RESEND_API_KEY` set in Vercel **Production** (and rotated on 2026-05-13 — see audit doc). Preview env: needs the same key set via dashboard if/when preview deploys exercise the contact form (Vercel CLI has a non-interactive bug for the "all preview branches" path).
+- ✅ **Key rotation 2026-05-13**: `RESEND_API_KEY` rotated after the original key was pasted into a chat transcript; `SUPABASE_SECRET_KEY` rotated per audit recommendation. Both verified working locally and in production.
 - ✅ Email replaced site-wide: `AlexSOuellet@gmail.com` → `alex@expressitstudios.com` on `/privacy`, `/terms`, `/refund`, `/checkout/success`, `/process`, and both product MDX files.
 - ⏳ Stripe LIVE mode (waits on Alex enabling tax + final QA on prod)
 
 ## Open items — priority order for next session
 
-1. **End-to-end prod test**: buy something on https://expressitstudios.com with test card `4242 4242 4242 4242`, confirm a row lands in Supabase `orders` table. Already verified locally — this catches any prod URL/env-var misconfig.
-2. **Smoke-test the live contact form**: submit it from https://expressitstudios.com/contact, confirm the email arrives. (Form already verified end-to-end against `localhost`, but production uses the Vercel-side `RESEND_API_KEY`.)
-3. **Resume Phase 2 steps 3–7** in order:
+Full security audit lives at `project-docs/SECURITY-AUDIT-2026-05-12.md`. The most valuable items below are summarized in the assistant's recommended ship order:
+
+1. **End-to-end prod purchase test**: buy something on https://expressitstudios.com with test card `4242 4242 4242 4242`. Confirm a row lands in Supabase `orders` table. Also doubles as the production smoke test for the rotated `SUPABASE_SECRET_KEY` (webhook → `supabaseAdmin().from('orders').upsert`).
+2. **Audit PR 1 — quick wins** (~1 hour, no decisions required):
+   - **H1** Add security headers in `next.config.ts` (CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy). For CSP, JSON-LD via `dangerouslySetInnerHTML` may need `'strict-dynamic'` or a nonce.
+   - **M3** Escape `</script>` in JSON-LD output at `src/app/products/[slug]/page.tsx:84`.
+   - **M7** Add `next lint` to `prebuild` so unused imports fail CI.
+   - **M6** Drop the unused `formatPrice` import at `src/app/products/[slug]/page.tsx:4` (will be caught by M7).
+3. **Audit PR 2 — rate limit + origin check** (H2 + H3). Decision needed: Upstash Redis vs Vercel KV vs simple in-memory per-instance limiter. The assistant's recommendation is the in-memory limiter for v1 — single-tenant shop with single-digit daily orders doesn't justify a Redis dependency yet. Worst case is Resend free tier (3k/mo) burns out, which is recoverable.
+4. **Audit PR 3 — hardening cleanup**:
+   - **M1** Tighten `subject`/`name` Zod schema in `/api/contact` to reject `\r\n`.
+   - **M2** Extend `safe()` in `/api/contact/route.ts` to cover `"` and `'`.
+   - **M5** Add a `// SECURITY:` comment in `src/lib/supabase/server.ts` warning future devs not to introduce a browser Supabase client. **Also**: add RLS policies on the `order-uploads` storage bucket before wiring Phase 2 step 4 (photo upload).
+   - **L2** Stop returning raw Stripe `err.message` from `/api/checkout` — log it, return generic.
+5. **Resume Phase 2 steps 3–7** in order:
    - Step 3 — Magic-link auth + `/order/[id]` customer page
-   - Step 4 — Photo upload form (direct-to-Supabase signed URLs)
+   - Step 4 — Photo upload form (direct-to-Supabase signed URLs) — **prerequisite**: storage bucket RLS policies (from PR 3 / M5)
    - Step 5 — `/admin` dashboard (email-allowlist gated, `ADMIN_EMAILS` env)
    - Step 6 — Resend transactional emails on status transitions (`getResend()` already wired in `src/lib/resend.ts`)
    - Step 7 — Vercel Analytics enable
-4. **Stripe LIVE mode** when ready: enable tax in Stripe → swap test keys for live keys in Vercel → final QA.
-5. **Housekeeping**: clean up the stray worktree at `.claude/worktrees/lucid-yalow-09a1bd` (`git worktree remove` + `git branch -D claude/lucid-yalow-09a1bd`). Came from a previous Claude session.
+6. **Stripe LIVE mode** when ready: enable tax in Stripe → swap test keys for live keys in Vercel → final QA.
+7. **Housekeeping**: verify `lucide-react` is on the real package and not a stale fork (`npm ls lucide-react` — modern lucide is on the `0.5xx` line; the repo currently pins `^1.14.0`).
 
 ## Important conventions
 
@@ -132,6 +147,7 @@ Saved at `~/.claude/projects/C--Projects-ExpressIt-Studios-Website/memory/`:
 - Keep responses terse.
 - **No worktrees** — commit directly on `main` in `C:\Projects\ExpressIt Studios\Website`.
 - **No shortcuts** — automate via CLI/API; don't walk Alex through dashboard UIs when a command works.
+- **Never solicit secrets in chat** (see checklist item 5 above; audit C1 explains why).
 
 ## How to run locally
 
