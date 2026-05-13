@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getActiveProducts, getProductBySlug } from "@/lib/products";
 import { ProductDetail } from "@/components/product/product-detail";
-import { formatPrice } from "@/lib/products/schema";
 
 export async function generateStaticParams() {
   const products = await getActiveProducts();
@@ -83,7 +82,9 @@ export default async function ProductPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
       />
       <ProductDetail product={product} />
     </>
