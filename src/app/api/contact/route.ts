@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getResend, CONTACT_FROM, CONTACT_TO } from "@/lib/resend";
+import { checkOrigin, rateLimit } from "@/lib/api/guards";
 
 const requestSchema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -11,6 +12,16 @@ const requestSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  const originBlock = checkOrigin(req);
+  if (originBlock) return originBlock;
+
+  const rateBlock = rateLimit(req, {
+    key: "contact",
+    limit: 5,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (rateBlock) return rateBlock;
+
   if (!process.env.RESEND_API_KEY) {
     return NextResponse.json(
       { error: "Contact form is not configured." },

@@ -3,6 +3,7 @@ import { z } from "zod";
 import Stripe from "stripe";
 import { getStripe, getSiteUrl } from "@/lib/stripe";
 import { getProductBySlug } from "@/lib/products";
+import { checkOrigin, rateLimit } from "@/lib/api/guards";
 
 const requestSchema = z.object({
   slug: z.string().min(1),
@@ -11,6 +12,16 @@ const requestSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  const originBlock = checkOrigin(req);
+  if (originBlock) return originBlock;
+
+  const rateBlock = rateLimit(req, {
+    key: "checkout",
+    limit: 20,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (rateBlock) return rateBlock;
+
   if (!process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json(
       {
