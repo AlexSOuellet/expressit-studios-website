@@ -12,7 +12,9 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  // Allow direct browser → Supabase calls for storage uploads (signed URLs)
+  // and any future client-side reads. Project ref is pinned to avoid wildcard.
+  "connect-src 'self' https://apxvlpdnfxqkcoyroaer.supabase.co",
   "frame-ancestors 'none'",
   "form-action 'self'",
   "base-uri 'self'",

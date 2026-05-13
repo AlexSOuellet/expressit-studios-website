@@ -1,6 +1,6 @@
 # ExpressIt Studios Website — Session Brief
 
-> Read this at the start of every session. Updated 2026-05-13 (audit closed end-to-end: PRs 1–3 live in prod; next up = Phase 2 step 3 magic-link auth).
+> Read this at the start of every session. Updated 2026-05-13 (Phase 2 steps 3+4 done: customer order page + photo uploads + vibe picker live; next up = step 5 admin dashboard).
 
 ## Start-of-session checklist for the assistant
 
@@ -51,11 +51,22 @@
 |---|---|
 | 1. Supabase project + schema (`orders`, `uploads`, `order_status` enum, RLS on, `order-uploads` private bucket) | ✅ |
 | 2. Stripe webhook `/api/stripe/webhook` → upserts orders row on `checkout.session.completed` | ✅ verified end-to-end locally and now in prod |
-| 3. Magic-link auth + `/order/[id]` customer page | ⏳ |
-| 4. Photo upload form (direct-to-Supabase signed URLs) | ⏳ |
+| 3. Signed-link customer order page (`/order/[id]?t=...`) | ✅ |
+| 4. Photo upload form (direct-to-Supabase signed URLs) + per-video vibe picker | ✅ |
 | 5. `/admin` dashboard (email-allowlist gated) | ⏳ |
-| 6. Resend emails on status transitions | ⏳ |
+| 6. Resend emails on status transitions (incl. order link in confirmation) | ⏳ |
 | 7. Vercel Analytics enable | ⏳ |
+
+**Auth model decision (2026-05-13):** No customer accounts, no magic-link
+auth. Each order gets a 256-bit random `access_token` stored in the
+`orders` row and embedded in the URL we hand the customer
+(`/order/<id>?t=<token>`). This is the *only* gate on order viewing and
+photo uploads — every API and page route does a constant-time token
+compare and returns 404 on mismatch. Reasons we picked this over magic
+links: this is guest-checkout commerce with no repeat-relationship use
+case yet, accounts add friction at the highest-stakes moment (right
+after payment), and Stripe already collects the email for marketing
+purposes — the access mechanism and the marketing list are independent.
 
 ### Deploy
 - ✅ Vercel project linked, env vars set for Production + Preview (Stripe test keys, Supabase, Resend placeholder, `ADMIN_EMAILS`)
@@ -90,16 +101,15 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
 
 ## Open items — priority order for next session
 
-1. **Phase 2 step 3 — Magic-link auth + `/order/[id]` customer page**
-   - Use Supabase Auth magic links. Email allowlist not relevant here — any customer email that has an `orders` row should be able to sign in and view *their own* orders.
-   - This is the foundation for step 4's signed-URL upload policies (owner identity).
-2. **Phase 2 step 4 — Photo upload form** (depends on step 3): direct-to-Supabase signed URLs.
-   - **Prereq**: write `order-uploads` storage RLS policies (M5b). Likely: authenticated owner can `select`/`insert` their own folder; everyone else denied.
-3. **Phase 2 step 5** — `/admin` dashboard (email-allowlist gated, `ADMIN_EMAILS` env)
-4. **Phase 2 step 6** — Resend transactional emails on status transitions (`getResend()` already wired in `src/lib/resend.ts`)
-5. **Phase 2 step 7** — Vercel Analytics enable
-6. **Stripe LIVE mode** when ready: enable tax in Stripe → swap test keys for live keys in Vercel → final QA.
-7. **Housekeeping**: verify `lucide-react` is on the real package and not a stale fork (`npm ls lucide-react` — modern lucide is on the `0.5xx` line; the repo currently pins `^1.14.0`).
+1. **Phase 2 step 5 — `/admin` dashboard** (email-allowlist gated, `ADMIN_EMAILS` env)
+   - List orders + each video's status, brief, vibe, and uploaded photos
+   - Status transitions: `photos_received` → `in_editing` → `delivered`
+   - Upload the finished video URL (set `orders.delivered_video_url`)
+   - This is the lowest-priority blocker for fulfilling real orders manually
+2. **Phase 2 step 6** — Resend transactional emails on status transitions (`getResend()` already wired in `src/lib/resend.ts`). The order-confirmation email must include the bookmark link `/order/<id>?t=<token>` — that's the customer's only way back to their order if they close the success page without saving the URL.
+3. **Phase 2 step 7** — Vercel Analytics enable
+4. **Stripe LIVE mode** when ready: enable tax in Stripe → swap test keys for live keys in Vercel → final QA.
+5. **Housekeeping**: verify `lucide-react` is on the real package and not a stale fork (`npm ls lucide-react` — modern lucide is on the `0.5xx` line; the repo currently pins `^1.14.0`).
 
 ## Important conventions
 
@@ -111,6 +121,10 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
 - **All routes** documented in `src/app/sitemap.ts`.
 - **Supabase migrations** live in `supabase/migrations/`. Apply with `npx supabase db push --include-all`. CLI is logged in and the project is linked (`.vercel/` and `supabase/.temp/` git-ignored).
 - **Repo is public.** Don't commit secrets. `.env*` (except `.env.example`) is gitignored.
+- **CSP allows the Supabase project URL** in `connect-src` (see `next.config.ts`). Direct browser → Supabase Storage uploads need this. The project ref is pinned (not a wildcard) — if the Supabase project ever changes, update the CSP too.
+- **Order access model:** `orders.access_token` is the *only* gate. Server routes (`/api/orders/[id]/*` and `/order/[id]`) load the order via `getOrderForToken(id, token)` in `src/lib/orders.ts` which does a constant-time compare and returns null on mismatch (callers 404 to avoid leaking existence). Never expose the token in logs, error messages, or analytics events.
+- **Per-video data model.** Each order has 1 or 3 `order_videos` rows (single vs bundle). Each row has its own `status`, `brief`, `vibe`, and uploads. The order itself only flips to `photos_received` once *every* video is submitted. The webhook creates the right number of rows based on whether the `variant_id` contains `bundle3`.
+- **Vibe picker is business-only.** `src/lib/vibes.ts::vibesForProduct(slug)` returns the menu (currently just `custom-product-video-ad`). Personal memory videos rely on the occasion option picked at checkout.
 
 ## Env vars (canonical list, see `.env.example`)
 
