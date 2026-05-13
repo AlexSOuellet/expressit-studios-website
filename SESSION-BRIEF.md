@@ -89,7 +89,7 @@ Full security audit lives at `project-docs/SECURITY-AUDIT-2026-05-12.md`. The mo
 4. **Audit PR 3 — hardening cleanup**:
    - **M1** Tighten `subject`/`name` Zod schema in `/api/contact` to reject `\r\n`.
    - **M2** Extend `safe()` in `/api/contact/route.ts` to cover `"` and `'`.
-   - **M5** Add a `// SECURITY:` comment in `src/lib/supabase/server.ts` warning future devs not to introduce a browser Supabase client. **Also**: add RLS policies on the `order-uploads` storage bucket before wiring Phase 2 step 4 (photo upload).
+   - **M5** Add a `// SECURITY:` comment in `src/lib/supabase/server.ts` warning future devs not to introduce a browser Supabase client. **Also**: add RLS policies on the `order-uploads` storage bucket before wiring Phase 2 step 4 (photo upload). _Bucket policy work is deferred to step 4 design — current state (RLS on, zero policies) blocks all anon/auth access; service-role server bypasses. Real policies need step 3's owner identity model._
    - **L2** Stop returning raw Stripe `err.message` from `/api/checkout` — log it, return generic.
 5. **Resume Phase 2 steps 3–7** in order:
    - Step 3 — Magic-link auth + `/order/[id]` customer page

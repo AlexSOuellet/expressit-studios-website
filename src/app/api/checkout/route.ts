@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import Stripe from "stripe";
 import { getStripe, getSiteUrl } from "@/lib/stripe";
 import { getProductBySlug } from "@/lib/products";
 import { checkOrigin, rateLimit } from "@/lib/api/guards";
@@ -140,10 +139,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: session.url });
   } catch (err) {
-    const message =
-      err instanceof Stripe.errors.StripeError
-        ? err.message
-        : "Could not start checkout.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[checkout] Stripe session create failed", err);
+    return NextResponse.json(
+      { error: "Could not start checkout. Please try again." },
+      { status: 500 }
+    );
   }
 }

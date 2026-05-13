@@ -3,10 +3,12 @@ import { z } from "zod";
 import { getResend, CONTACT_FROM, CONTACT_TO } from "@/lib/resend";
 import { checkOrigin, rateLimit } from "@/lib/api/guards";
 
+const singleLine = z.string().trim().regex(/^[^\r\n]+$/, "single line only");
+
 const requestSchema = z.object({
-  name: z.string().trim().min(1).max(120),
+  name: singleLine.min(1).max(120),
   email: z.string().trim().email().max(200),
-  subject: z.string().trim().min(1).max(150),
+  subject: singleLine.min(1).max(150),
   message: z.string().trim().min(10).max(5000),
   website: z.string().max(0).optional().default(""),
 });
@@ -49,10 +51,14 @@ export async function POST(req: Request) {
   }
 
   const { name, email, subject, message } = parsed.data;
-  const safe = (s: string) =>
-    s.replace(/[<>&]/g, (c) =>
-      c === "<" ? "&lt;" : c === ">" ? "&gt;" : "&amp;"
-    );
+  const HTML_ESCAPES: Record<string, string> = {
+    "<": "&lt;",
+    ">": "&gt;",
+    "&": "&amp;",
+    '"': "&quot;",
+    "'": "&#39;",
+  };
+  const safe = (s: string) => s.replace(/[<>&"']/g, (c) => HTML_ESCAPES[c]!);
 
   try {
     await getResend().emails.send({
