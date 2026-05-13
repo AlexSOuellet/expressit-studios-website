@@ -1,6 +1,6 @@
 # ExpressIt Studios Website — Session Brief
 
-> Read this at the start of every session. Updated 2026-05-13 (post-audit + key rotation).
+> Read this at the start of every session. Updated 2026-05-13 (audit closed end-to-end: PRs 1–3 live in prod; next up = Phase 2 step 3 magic-link auth).
 
 ## Start-of-session checklist for the assistant
 
@@ -75,28 +75,29 @@
 - ✅ Email replaced site-wide: `AlexSOuellet@gmail.com` → `alex@expressitstudios.com` on `/privacy`, `/terms`, `/refund`, `/checkout/success`, `/process`, and both product MDX files.
 - ⏳ Stripe LIVE mode (waits on Alex enabling tax + final QA on prod)
 
+## Security audit — closed
+
+Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-13:
+
+- ✅ **C1** keys rotated (`RESEND_API_KEY`, `SUPABASE_SECRET_KEY`)
+- ✅ **Prod purchase test** — `cs_test_a1MGfM…` ($35 starter) wrote `orders` row `27a0603d…`; confirms rotated `SUPABASE_SECRET_KEY` works in prod webhook
+- ✅ **PR 1** (`314bfdd`) — H1 security headers in `next.config.ts`, M3 JSON-LD escape, M6 unused import, M7 eslint in `prebuild`
+- ✅ **PR 2** (`7f0330d`) — H2 in-memory rate limit + H3 Origin check in `src/lib/api/guards.ts`, wired into `/api/contact` (5/10min) and `/api/checkout` (20/10min). Closes M4 by extension. In-memory is per-instance; revisit when traffic warrants Upstash/KV.
+- ✅ **PR 3** (`dfcea34`) — M1 CR/LF rejection on contact name/subject, M2 `safe()` covers `"`/`'`, M5 `// SECURITY:` comment + `server-only` import in `src/lib/supabase/server.ts`, L2 generic checkout error (log full server-side)
+- ⏳ **M5b** storage bucket RLS policies on `order-uploads` — deferred to **step 4 design** (depends on step 3 auth model). Current state (RLS on, zero policies) blocks all anon/auth; service-role server bypasses.
+- ⏳ **L1** route `console.error` through Sentry/structured logger — optional, bigger lift
+- ⏳ **L6** mobile `<details>` menu doesn't close on link tap — minor UX, not security
+
 ## Open items — priority order for next session
 
-Full security audit lives at `project-docs/SECURITY-AUDIT-2026-05-12.md`. The most valuable items below are summarized in the assistant's recommended ship order:
-
-1. **End-to-end prod purchase test**: buy something on https://expressitstudios.com with test card `4242 4242 4242 4242`. Confirm a row lands in Supabase `orders` table. Also doubles as the production smoke test for the rotated `SUPABASE_SECRET_KEY` (webhook → `supabaseAdmin().from('orders').upsert`).
-2. **Audit PR 1 — quick wins** (~1 hour, no decisions required):
-   - **H1** Add security headers in `next.config.ts` (CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy). For CSP, JSON-LD via `dangerouslySetInnerHTML` may need `'strict-dynamic'` or a nonce.
-   - **M3** Escape `</script>` in JSON-LD output at `src/app/products/[slug]/page.tsx:84`.
-   - **M7** Add `next lint` to `prebuild` so unused imports fail CI.
-   - **M6** Drop the unused `formatPrice` import at `src/app/products/[slug]/page.tsx:4` (will be caught by M7).
-3. **Audit PR 2 — rate limit + origin check** (H2 + H3). Decision needed: Upstash Redis vs Vercel KV vs simple in-memory per-instance limiter. The assistant's recommendation is the in-memory limiter for v1 — single-tenant shop with single-digit daily orders doesn't justify a Redis dependency yet. Worst case is Resend free tier (3k/mo) burns out, which is recoverable.
-4. **Audit PR 3 — hardening cleanup**:
-   - **M1** Tighten `subject`/`name` Zod schema in `/api/contact` to reject `\r\n`.
-   - **M2** Extend `safe()` in `/api/contact/route.ts` to cover `"` and `'`.
-   - **M5** Add a `// SECURITY:` comment in `src/lib/supabase/server.ts` warning future devs not to introduce a browser Supabase client. **Also**: add RLS policies on the `order-uploads` storage bucket before wiring Phase 2 step 4 (photo upload). _Bucket policy work is deferred to step 4 design — current state (RLS on, zero policies) blocks all anon/auth access; service-role server bypasses. Real policies need step 3's owner identity model._
-   - **L2** Stop returning raw Stripe `err.message` from `/api/checkout` — log it, return generic.
-5. **Resume Phase 2 steps 3–7** in order:
-   - Step 3 — Magic-link auth + `/order/[id]` customer page
-   - Step 4 — Photo upload form (direct-to-Supabase signed URLs) — **prerequisite**: storage bucket RLS policies (from PR 3 / M5)
-   - Step 5 — `/admin` dashboard (email-allowlist gated, `ADMIN_EMAILS` env)
-   - Step 6 — Resend transactional emails on status transitions (`getResend()` already wired in `src/lib/resend.ts`)
-   - Step 7 — Vercel Analytics enable
+1. **Phase 2 step 3 — Magic-link auth + `/order/[id]` customer page**
+   - Use Supabase Auth magic links. Email allowlist not relevant here — any customer email that has an `orders` row should be able to sign in and view *their own* orders.
+   - This is the foundation for step 4's signed-URL upload policies (owner identity).
+2. **Phase 2 step 4 — Photo upload form** (depends on step 3): direct-to-Supabase signed URLs.
+   - **Prereq**: write `order-uploads` storage RLS policies (M5b). Likely: authenticated owner can `select`/`insert` their own folder; everyone else denied.
+3. **Phase 2 step 5** — `/admin` dashboard (email-allowlist gated, `ADMIN_EMAILS` env)
+4. **Phase 2 step 6** — Resend transactional emails on status transitions (`getResend()` already wired in `src/lib/resend.ts`)
+5. **Phase 2 step 7** — Vercel Analytics enable
 6. **Stripe LIVE mode** when ready: enable tax in Stripe → swap test keys for live keys in Vercel → final QA.
 7. **Housekeeping**: verify `lucide-react` is on the real package and not a stale fork (`npm ls lucide-react` — modern lucide is on the `0.5xx` line; the repo currently pins `^1.14.0`).
 
