@@ -1,6 +1,6 @@
 # ExpressIt Studios Website — Session Brief
 
-> Read this at the start of every session. Updated 2026-05-13 (Phase 2 steps 3+4 done: customer order page + photo uploads + vibe picker live; next up = step 5 admin dashboard).
+> Read this at the start of every session. Updated 2026-05-14 (Phase 2 step 5 done: /admin dashboard live behind HTTP Basic Auth; next up = step 6 transactional emails).
 
 ## Start-of-session checklist for the assistant
 
@@ -53,7 +53,7 @@
 | 2. Stripe webhook `/api/stripe/webhook` → upserts orders row on `checkout.session.completed` | ✅ verified end-to-end locally and now in prod |
 | 3. Signed-link customer order page (`/order/[id]?t=...`) | ✅ |
 | 4. Photo upload form (direct-to-Supabase signed URLs) + per-video vibe picker | ✅ |
-| 5. `/admin` dashboard (email-allowlist gated) | ⏳ |
+| 5. `/admin` dashboard (HTTP Basic Auth gated) | ✅ |
 | 6. Resend emails on status transitions (incl. order link in confirmation) | ⏳ |
 | 7. Vercel Analytics enable | ⏳ |
 
@@ -101,11 +101,10 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
 
 ## Open items — priority order for next session
 
-1. **Phase 2 step 5 — `/admin` dashboard** (email-allowlist gated, `ADMIN_EMAILS` env)
-   - List orders + each video's status, brief, vibe, and uploaded photos
-   - Status transitions: `photos_received` → `in_editing` → `delivered`
-   - Upload the finished video URL (set `orders.delivered_video_url`)
-   - This is the lowest-priority blocker for fulfilling real orders manually
+1. **Set `ADMIN_USER` / `ADMIN_PASSWORD` in Vercel** (Production + Preview) — `/admin`
+   is gated by HTTP Basic Auth (`src/proxy.ts`). It fails closed: until these are
+   set in Vercel, `/admin` returns 401 in prod. `ADMIN_EMAILS` is now unused —
+   remove it from Vercel when convenient.
 2. **Phase 2 step 6** — Resend transactional emails on status transitions (`getResend()` already wired in `src/lib/resend.ts`). The order-confirmation email must include the bookmark link `/order/<id>?t=<token>` — that's the customer's only way back to their order if they close the success page without saving the URL.
 3. **Phase 2 step 7** — Vercel Analytics enable
 4. **Stripe LIVE mode** when ready: enable tax in Stripe → swap test keys for live keys in Vercel → final QA.
@@ -132,7 +131,8 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
 - `NEXT_PUBLIC_SITE_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
 - `RESEND_API_KEY` — used by `/api/contact` and (future) order status emails. Domain `expressitstudios.com` is verified in Resend. From address = `noreply@expressitstudios.com`. To rotate, generate a new key with Sending access scoped to the domain.
-- `ADMIN_EMAILS` (comma-separated, gates future `/admin`)
+- `ADMIN_USER`, `ADMIN_PASSWORD` — HTTP Basic Auth creds for `/admin` + `/api/admin/*` (gated by `src/proxy.ts`)
+- `ADMIN_EMAILS` — **unused** (legacy; `/admin` auth moved to Basic Auth). Safe to delete from Vercel.
 
 ## CLIs available (all authenticated)
 
