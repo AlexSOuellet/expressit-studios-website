@@ -106,6 +106,9 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
    is gated by HTTP Basic Auth (`src/proxy.ts`). It fails closed: until these are
    set in Vercel, `/admin` returns 401 in prod. `ADMIN_EMAILS` is now unused —
    remove it from Vercel when convenient.
+   - Migration `0004_deliverables.sql` is **already applied to prod Supabase**.
+     The matching code is pushed to `main`; Vercel auto-deploys on push, so prod
+     picks it up without manual steps — just the env vars above are still needed.
 2. **Phase 2 step 6** — Resend transactional emails on status transitions (`getResend()` already wired in `src/lib/resend.ts`). The order-confirmation email must include the bookmark link `/order/<id>?t=<token>` — that's the customer's only way back to their order if they close the success page without saving the URL.
 3. **Phase 2 step 7** — Vercel Analytics enable
 4. **Stripe LIVE mode** when ready: enable tax in Stripe → swap test keys for live keys in Vercel → final QA.
