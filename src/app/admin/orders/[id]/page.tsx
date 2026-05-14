@@ -4,8 +4,8 @@ import { notFound } from "next/navigation";
 import { getAdminOrder } from "@/lib/admin";
 import { getProductBySlug, formatPrice } from "@/lib/products";
 import { vibesForProduct } from "@/lib/vibes";
-import { orderUrl, type OrderVideoStatus } from "@/lib/orders";
-import { VideoStatusActions, DeliverForm } from "@/components/admin/order-actions";
+import { orderUrl, MAX_REVISIONS, type OrderVideoStatus } from "@/lib/orders";
+import { VideoAdminPanel } from "@/components/admin/order-actions";
 
 export const metadata: Metadata = {
   title: "Admin — Order",
@@ -20,6 +20,8 @@ const VIDEO_STATUS_LABEL: Record<OrderVideoStatus, string> = {
   awaiting_photos: "Awaiting photos",
   photos_received: "Photos received",
   in_editing: "In editing",
+  awaiting_approval: "Awaiting approval",
+  revisions_requested: "Revisions requested",
   delivered: "Delivered",
 };
 
@@ -96,7 +98,7 @@ export default async function AdminOrderDetailPage({
           </dl>
         </section>
 
-        <section className="mb-8">
+        <section>
           <h2 className="font-mono text-label-caps text-primary uppercase tracking-widest mb-4">
             Videos
           </h2>
@@ -121,40 +123,70 @@ export default async function AdminOrderDetailPage({
                   <dd className="text-on-surface whitespace-pre-wrap">
                     {v.brief.trim() || "—"}
                   </dd>
+                  <dt className="text-on-surface-variant">Revisions used</dt>
+                  <dd className="text-on-surface">
+                    {v.revision_count} / {MAX_REVISIONS}
+                  </dd>
                 </dl>
+
+                {v.revision_note && (
+                  <div className="rounded-lg border border-outline bg-surface-container-low p-4 mb-5">
+                    <p className="font-mono text-ui-mono uppercase tracking-widest text-secondary mb-1">
+                      Latest revision request
+                    </p>
+                    <p className="font-body text-body-md text-on-surface whitespace-pre-wrap">
+                      {v.revision_note}
+                    </p>
+                  </div>
+                )}
 
                 {v.uploads.length > 0 && (
                   <ul className="grid grid-cols-3 gap-3 mb-5">
                     {v.uploads.map((u) => (
-                      <li
-                        key={u.id}
-                        className="relative aspect-square rounded-lg overflow-hidden bg-surface-container-low border border-outline"
-                      >
-                        {u.signedUrl ? (
+                      <li key={u.id} className="space-y-1">
+                        <div className="relative aspect-square rounded-lg overflow-hidden bg-surface-container-low border border-outline">
+                          {u.viewUrl ? (
+                            <a href={u.viewUrl} target="_blank" rel="noreferrer">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={u.viewUrl}
+                                alt={u.original_filename}
+                                className="absolute inset-0 w-full h-full object-cover"
+                              />
+                            </a>
+                          ) : (
+                            <span className="absolute inset-0 flex items-center justify-center font-mono text-ui-mono text-outline p-2 text-center">
+                              {u.original_filename}
+                            </span>
+                          )}
+                        </div>
+                        {u.downloadUrl && (
                           <a
-                            href={u.signedUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            title={`${u.original_filename} · ${formatBytes(u.size_bytes)}`}
+                            href={u.downloadUrl}
+                            className="block font-mono text-ui-mono uppercase tracking-widest text-primary hover:underline"
                           >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={u.signedUrl}
-                              alt={u.original_filename}
-                              className="absolute inset-0 w-full h-full object-cover"
-                            />
+                            ↓ Download ({formatBytes(u.size_bytes)})
                           </a>
-                        ) : (
-                          <span className="absolute inset-0 flex items-center justify-center font-mono text-ui-mono text-outline p-2 text-center">
-                            {u.original_filename}
-                          </span>
                         )}
                       </li>
                     ))}
                   </ul>
                 )}
 
-                <VideoStatusActions
+                {v.deliverableUrl && (
+                  <div className="mb-5">
+                    <p className="font-mono text-ui-mono uppercase tracking-widest text-secondary mb-2">
+                      Finished video
+                    </p>
+                    <video
+                      src={v.deliverableUrl}
+                      controls
+                      className="w-full rounded-lg border border-outline bg-black"
+                    />
+                  </div>
+                )}
+
+                <VideoAdminPanel
                   orderId={order.id}
                   videoIndex={v.video_index}
                   status={v.status}
@@ -162,16 +194,6 @@ export default async function AdminOrderDetailPage({
               </article>
             ))}
           </div>
-        </section>
-
-        <section className="glass-card rounded-xl p-6">
-          <h2 className="font-mono text-label-caps text-primary uppercase tracking-widest mb-4">
-            Delivered video link
-          </h2>
-          <p className="font-body text-body-sm text-on-surface-variant mb-4">
-            The customer sees this link on their order page once it&rsquo;s set.
-          </p>
-          <DeliverForm orderId={order.id} initialUrl={order.delivered_video_url} />
         </section>
       </div>
     </main>

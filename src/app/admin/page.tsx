@@ -15,6 +15,7 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
   awaiting_photos: "Awaiting photos",
   photos_received: "Photos received",
   in_editing: "In editing",
+  awaiting_approval: "Awaiting approval",
   revisions_requested: "Revisions requested",
   delivered: "Delivered",
 };

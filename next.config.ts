@@ -11,6 +11,9 @@ const csp = [
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
+  // Stream finished videos from Supabase Storage (signed URLs) in the
+  // customer order page <video> element.
+  "media-src 'self' https://apxvlpdnfxqkcoyroaer.supabase.co",
   "font-src 'self' data:",
   // Allow direct browser → Supabase calls for storage uploads (signed URLs)
   // and any future client-side reads. Project ref is pinned to avoid wildcard.

@@ -1,6 +1,6 @@
 # ExpressIt Studios Website — Session Brief
 
-> Read this at the start of every session. Updated 2026-05-14 (Phase 2 step 5 done: /admin dashboard live behind HTTP Basic Auth; next up = step 6 transactional emails).
+> Read this at the start of every session. Updated 2026-05-14 (Phase 2 step 5 + finished-video delivery/approval flow done; next up = step 6 transactional emails).
 
 ## Start-of-session checklist for the assistant
 
@@ -54,6 +54,7 @@
 | 3. Signed-link customer order page (`/order/[id]?t=...`) | ✅ |
 | 4. Photo upload form (direct-to-Supabase signed URLs) + per-video vibe picker | ✅ |
 | 5. `/admin` dashboard (HTTP Basic Auth gated) | ✅ |
+| 5b. Finished-video delivery + customer approval flow (admin uploads video → customer approves or requests revisions; revisions capped at 2) | ✅ |
 | 6. Resend emails on status transitions (incl. order link in confirmation) | ⏳ |
 | 7. Vercel Analytics enable | ⏳ |
 
@@ -122,7 +123,9 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
 - **Repo is public.** Don't commit secrets. `.env*` (except `.env.example`) is gitignored.
 - **CSP allows the Supabase project URL** in `connect-src` (see `next.config.ts`). Direct browser → Supabase Storage uploads need this. The project ref is pinned (not a wildcard) — if the Supabase project ever changes, update the CSP too.
 - **Order access model:** `orders.access_token` is the *only* gate. Server routes (`/api/orders/[id]/*` and `/order/[id]`) load the order via `getOrderForToken(id, token)` in `src/lib/orders.ts` which does a constant-time compare and returns null on mismatch (callers 404 to avoid leaking existence). Never expose the token in logs, error messages, or analytics events.
-- **Per-video data model.** Each order has 1 or 3 `order_videos` rows (single vs bundle). Each row has its own `status`, `brief`, `vibe`, and uploads. The order itself only flips to `photos_received` once *every* video is submitted. The webhook creates the right number of rows based on whether the `variant_id` contains `bundle3`.
+- **Per-video data model.** Each order has 1 or 3 `order_videos` rows (single vs bundle). Each row has its own `status`, `brief`, `vibe`, uploads, `deliverable_path`, `revision_count`, `revision_note`. The webhook creates the right number of rows based on whether the `variant_id` contains `bundle3`.
+- **Video lifecycle.** `awaiting_photos` → (customer submits) `photos_received` → (admin) `in_editing` → (admin uploads finished video) `awaiting_approval` → customer either approves (`delivered`) or requests changes (`revisions_requested` → back to `in_editing`). Revisions capped at `MAX_REVISIONS` (2) in `src/lib/orders.ts`. Order status is derived from its least-advanced video via `deriveOrderStatus` in `src/lib/admin.ts`.
+- **Two private storage buckets.** `order-uploads` = customer source photos; `order-deliverables` = admin's finished videos. Both private, RLS-free, accessed only via the service-role server client + short-lived signed URLs. CSP `media-src` allows the Supabase URL so the customer page can stream the video.
 - **Vibe picker is business-only.** `src/lib/vibes.ts::vibesForProduct(slug)` returns the menu (currently just `custom-product-video-ad`). Personal memory videos rely on the occasion option picked at checkout.
 
 ## Env vars (canonical list, see `.env.example`)

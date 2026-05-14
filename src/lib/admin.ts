@@ -1,11 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import type {
-  OrderRow,
-  OrderVideoRow,
-  OrderVideoStatus,
-  OrderStatus,
-} from "@/lib/orders";
+import { getDeliverableUrl } from "@/lib/orders";
+import type { OrderRow, OrderVideoRow, OrderVideoStatus, OrderStatus } from "@/lib/orders";
 
 // Admin-side data access. Every function here runs behind the HTTP Basic Auth
 // proxy (see src/proxy.ts) and uses the service-role client, so it reads
@@ -21,18 +17,21 @@ export type AdminUpload = {
   uploaded_at: string;
 };
 
+export type AdminUploadWithUrls = AdminUpload & {
+  viewUrl: string | null;
+  downloadUrl: string | null;
+};
+
 export type AdminVideo = OrderVideoRow & {
-  vibe: string | null;
-  uploads: (AdminUpload & { signedUrl: string | null })[];
+  uploads: AdminUploadWithUrls[];
+  deliverableUrl: string | null;
 };
 
 export type AdminOrderListItem = OrderRow & {
-  delivered_video_url: string | null;
   videos: Pick<OrderVideoRow, "video_index" | "status">[];
 };
 
 export type AdminOrderDetail = OrderRow & {
-  delivered_video_url: string | null;
   updated_at: string;
   videos: AdminVideo[];
 };
@@ -43,9 +42,7 @@ export async function listAllOrders(): Promise<AdminOrderListItem[]> {
   const supabase = supabaseAdmin();
   const { data, error } = await supabase
     .from("orders")
-    .select(
-      "*, videos:order_videos(video_index, status)"
-    )
+    .select("*, videos:order_videos(video_index, status)")
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];
@@ -76,38 +73,59 @@ export async function getAdminOrder(
 
   const uploads = (uploadRows ?? []) as AdminUpload[];
 
-  // Batch a signed URL for each uploaded photo so the detail page can render
-  // thumbnails. The bucket is private; these links expire after the TTL.
+  // Batch signed URLs for the customer's photos: one inline-view URL for the
+  // thumbnail and one Content-Disposition URL so the admin can download the
+  // original file. The bucket is private; links expire after the TTL.
   const paths = uploads.map((u) => u.storage_path);
-  const signedByPath = new Map<string, string>();
+  const viewByPath = new Map<string, string>();
+  const downloadByPath = new Map<string, string>();
   if (paths.length > 0) {
-    const { data: signed } = await supabase.storage
-      .from("order-uploads")
-      .createSignedUrls(paths, SIGNED_URL_TTL);
-    for (const s of signed ?? []) {
-      if (s.signedUrl && s.path) signedByPath.set(s.path, s.signedUrl);
+    const [viewRes, downloadRes] = await Promise.all([
+      supabase.storage.from("order-uploads").createSignedUrls(paths, SIGNED_URL_TTL),
+      supabase.storage
+        .from("order-uploads")
+        .createSignedUrls(paths, SIGNED_URL_TTL, { download: true }),
+    ]);
+    for (const s of viewRes.data ?? []) {
+      if (s.signedUrl && s.path) viewByPath.set(s.path, s.signedUrl);
+    }
+    for (const s of downloadRes.data ?? []) {
+      if (s.signedUrl && s.path) downloadByPath.set(s.path, s.signedUrl);
     }
   }
 
-  const videos = (data.videos as (OrderVideoRow & { vibe: string | null })[])
-    .map((v) => ({
+  const rawVideos = data.videos as OrderVideoRow[];
+  const videos: AdminVideo[] = await Promise.all(
+    rawVideos.map(async (v) => ({
       ...v,
       uploads: uploads
         .filter((u) => u.video_index === v.video_index)
-        .map((u) => ({ ...u, signedUrl: signedByPath.get(u.storage_path) ?? null })),
+        .map((u) => ({
+          ...u,
+          viewUrl: viewByPath.get(u.storage_path) ?? null,
+          downloadUrl: downloadByPath.get(u.storage_path) ?? null,
+        })),
+      deliverableUrl: v.deliverable_path
+        ? await getDeliverableUrl(v.deliverable_path)
+        : null,
     }))
-    .sort((a, b) => a.video_index - b.video_index);
+  );
+  videos.sort((a, b) => a.video_index - b.video_index);
 
-  return { ...(data as OrderRow & { delivered_video_url: string | null; updated_at: string }), videos };
+  return { ...(data as OrderRow & { updated_at: string }), videos };
 }
 
-// Allowed forward transitions for a single video. The customer flow moves a
-// video to photos_received; the admin moves it through editing to delivered.
+// Manual transitions the admin can apply from the dashboard. The other moves
+// happen elsewhere: in_editing -> awaiting_approval when the admin uploads a
+// deliverable, and awaiting_approval -> delivered | revisions_requested from
+// the customer's review action. `delivered` is terminal.
 const VIDEO_TRANSITIONS: Record<OrderVideoStatus, OrderVideoStatus[]> = {
   awaiting_photos: [],
   photos_received: ["in_editing"],
-  in_editing: ["delivered", "photos_received"],
-  delivered: ["in_editing"],
+  in_editing: ["photos_received"],
+  awaiting_approval: ["in_editing"],
+  revisions_requested: ["in_editing"],
+  delivered: [],
 };
 
 export function canTransitionVideo(
@@ -117,16 +135,24 @@ export function canTransitionVideo(
   return VIDEO_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
-// Derive the order's overall status from its videos. Kept deliberately simple:
-// the order trails the least-advanced video.
+// Lower rank = less advanced. The order trails its least-advanced video.
+const STATUS_RANK: Record<OrderVideoStatus, number> = {
+  awaiting_photos: 0,
+  photos_received: 1,
+  revisions_requested: 2,
+  in_editing: 2,
+  awaiting_approval: 3,
+  delivered: 4,
+};
+
 export function deriveOrderStatus(
   videoStatuses: OrderVideoStatus[]
 ): OrderStatus {
   if (videoStatuses.length === 0) return "awaiting_photos";
-  if (videoStatuses.every((s) => s === "delivered")) return "delivered";
-  if (videoStatuses.some((s) => s === "awaiting_photos")) return "awaiting_photos";
-  if (videoStatuses.some((s) => s === "in_editing" || s === "delivered")) {
-    return "in_editing";
+
+  let least = videoStatuses[0]!;
+  for (const s of videoStatuses) {
+    if (STATUS_RANK[s] < STATUS_RANK[least]) least = s;
   }
-  return "photos_received";
+  return least;
 }
