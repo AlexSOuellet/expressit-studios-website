@@ -4,6 +4,7 @@ import { getOrderForToken } from "@/lib/orders";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { checkOrigin, rateLimit } from "@/lib/api/guards";
 import { isValidVibe } from "@/lib/vibes";
+import { sendAdminPhotosReceived } from "@/lib/emails";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -137,6 +138,10 @@ export async function POST(
       .update({ status: "photos_received" })
       .eq("id", order.id);
   }
+
+  // Notify admin on every video submission so a bundle customer who uploads
+  // their three videos at different times produces three notifications.
+  await sendAdminPhotosReceived(order, videoIndex, order.videos.length);
 
   return NextResponse.json({ ok: true });
 }

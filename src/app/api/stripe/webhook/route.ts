@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { sendOrderConfirmation } from "@/lib/emails";
+import type { OrderRow } from "@/lib/orders";
 
 // Stripe needs the raw request body to verify the signature.
 export const runtime = "nodejs";
@@ -78,7 +80,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const videoCount = variantId.includes("bundle3") ? 3 : 1;
 
   const supabase = supabaseAdmin();
-  const { data: orderRow, error } = await supabase
+
+  // Stripe at-least-once delivery means we can see the same session twice,
+  // and the stripe CLI forwarder will sometimes deliver duplicates within
+  // milliseconds. Let the DB resolve the race: upsert-ignore-duplicates,
+  // then SELECT the canonical row.
+  const { data: insertResult, error: insertErr } = await supabase
     .from("orders")
     .upsert(
       {
@@ -90,13 +97,32 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         price_cents: priceCents,
         status: "awaiting_photos",
       },
-      { onConflict: "stripe_session_id" }
+      { onConflict: "stripe_session_id", ignoreDuplicates: true }
     )
-    .select("id")
-    .single();
+    .select("*");
 
-  if (error) {
-    throw new Error(`Supabase insert failed: ${error.message}`);
+  if (insertErr) {
+    throw new Error(`Supabase insert failed: ${insertErr.message}`);
+  }
+
+  // ignoreDuplicates: true → empty array on conflict; one row on fresh insert.
+  const isNewOrder = (insertResult?.length ?? 0) > 0;
+
+  let orderRow: OrderRow;
+  if (isNewOrder) {
+    orderRow = insertResult![0] as OrderRow;
+  } else {
+    const { data: existing, error: selectErr } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("stripe_session_id", session.id)
+      .maybeSingle();
+    if (selectErr || !existing) {
+      throw new Error(
+        `Could not load existing order: ${selectErr?.message ?? "no row"}`
+      );
+    }
+    orderRow = existing as OrderRow;
   }
 
   // Create one order_videos row per video slot. Idempotent under Stripe's
@@ -112,5 +138,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   if (videosErr) {
     throw new Error(`order_videos insert failed: ${videosErr.message}`);
+  }
+
+  if (isNewOrder) {
+    await sendOrderConfirmation(orderRow);
   }
 }

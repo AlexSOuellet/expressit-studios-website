@@ -3,7 +3,8 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { checkOrigin, rateLimit } from "@/lib/api/guards";
 import { deriveOrderStatus } from "@/lib/admin";
-import type { OrderVideoStatus } from "@/lib/orders";
+import type { OrderRow, OrderVideoStatus } from "@/lib/orders";
+import { sendAwaitingApproval } from "@/lib/emails";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -106,6 +107,16 @@ export async function POST(
       allVideos.map((v) => v.status as OrderVideoStatus)
     );
     await supabase.from("orders").update({ status: orderStatus }).eq("id", id);
+  }
+
+  const { data: orderRow } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (orderRow) {
+    const videoCount = allVideos?.length ?? 1;
+    await sendAwaitingApproval(orderRow as OrderRow, videoIndex, videoCount);
   }
 
   return NextResponse.json({ ok: true });

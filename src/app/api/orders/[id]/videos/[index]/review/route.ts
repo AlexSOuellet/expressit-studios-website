@@ -4,7 +4,12 @@ import { getOrderForToken, MAX_REVISIONS } from "@/lib/orders";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { checkOrigin, rateLimit } from "@/lib/api/guards";
 import { deriveOrderStatus } from "@/lib/admin";
-import type { OrderVideoStatus } from "@/lib/orders";
+import type { OrderVideoRow, OrderVideoStatus } from "@/lib/orders";
+import {
+  sendAdminOrderApproved,
+  sendAdminRevisionsRequested,
+  sendDeliveredThanks,
+} from "@/lib/emails";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,6 +63,7 @@ export async function POST(
 
   const supabase = supabaseAdmin();
 
+  let updatedVideo: OrderVideoRow | null = null;
   if (parsed.decision === "approve") {
     const { error } = await supabase
       .from("order_videos")
@@ -68,21 +74,33 @@ export async function POST(
       console.error("[review] approve failed", error);
       return NextResponse.json({ error: "Server error." }, { status: 500 });
     }
+    await sendDeliveredThanks(order, videoIndex, order.videos.length);
+    // Tell Alex this video closed, plus whether the whole order is done.
+    const allDelivered = order.videos.every(
+      (v) => v.video_index === videoIndex || v.status === "delivered"
+    );
+    await sendAdminOrderApproved(
+      order,
+      videoIndex,
+      order.videos.length,
+      allDelivered
+    );
   } else {
     if (video.revision_count >= MAX_REVISIONS) {
       return NextResponse.json(
         {
-          error: `You've used all ${MAX_REVISIONS} revisions for this video. Please approve it, or reach out if something's still off.`,
+          error: `You've used all ${MAX_REVISIONS} revisions for this video. Please approve it, or use the Contact page if something's still off.`,
         },
         { status: 409 }
       );
     }
     const note = parsed.note?.trim() || null;
+    const newRevisionCount = video.revision_count + 1;
     const { error } = await supabase
       .from("order_videos")
       .update({
         status: "revisions_requested",
-        revision_count: video.revision_count + 1,
+        revision_count: newRevisionCount,
         revision_note: note,
       })
       .eq("order_id", id)
@@ -91,6 +109,13 @@ export async function POST(
       console.error("[review] revision request failed", error);
       return NextResponse.json({ error: "Server error." }, { status: 500 });
     }
+    updatedVideo = {
+      ...video,
+      status: "revisions_requested",
+      revision_count: newRevisionCount,
+      revision_note: note,
+    };
+    await sendAdminRevisionsRequested(order, updatedVideo);
   }
 
   // Recompute the order's overall status from all of its videos.

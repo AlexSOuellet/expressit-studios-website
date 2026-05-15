@@ -9,7 +9,13 @@ type Status =
   | { kind: "success" }
   | { kind: "error"; message: string };
 
-export function ContactForm() {
+export function ContactForm({
+  initialSubject = "",
+  initialMessage = "",
+}: {
+  initialSubject?: string;
+  initialMessage?: string;
+} = {}) {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -121,6 +127,7 @@ export function ContactForm() {
           type="text"
           required
           maxLength={150}
+          defaultValue={initialSubject}
           disabled={submitting}
           className={inputClass}
         />
@@ -136,6 +143,7 @@ export function ContactForm() {
           minLength={10}
           maxLength={5000}
           rows={6}
+          defaultValue={initialMessage}
           disabled={submitting}
           className={`${inputClass} resize-y`}
         />

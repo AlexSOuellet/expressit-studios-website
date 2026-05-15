@@ -15,5 +15,8 @@ export function getResend(): Resend {
   return cached;
 }
 
-export const CONTACT_FROM = "ExpressIt Studios <noreply@expressitstudios.com>";
+export const CONTACT_FROM = "Contact Form <contact@expressitstudios.com>";
 export const CONTACT_TO = "alex@expressitstudios.com";
+
+export const ORDERS_FROM = "Orders <orders@expressitstudios.com>";
+export const ORDERS_ADMIN_TO = "alex@expressitstudios.com";

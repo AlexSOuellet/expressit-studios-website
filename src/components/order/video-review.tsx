@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, AlertCircle, RotateCcw } from "lucide-react";
 
@@ -129,7 +130,14 @@ export function VideoReview({
       {revisionsRemaining === 0 && (
         <p className="font-body text-body-sm text-on-surface-variant">
           You&rsquo;ve used all your revisions for this video. If something
-          still isn&rsquo;t right, get in touch and we&rsquo;ll make it right.
+          still isn&rsquo;t right,{" "}
+          <Link
+            href={`/contact?order=${encodeURIComponent(orderId)}&v=${videoIndex}`}
+            className="underline"
+          >
+            get in touch
+          </Link>{" "}
+          and we&rsquo;ll make it right.
         </p>
       )}
     </div>

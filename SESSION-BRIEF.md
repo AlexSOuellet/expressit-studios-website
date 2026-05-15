@@ -1,6 +1,6 @@
 # ExpressIt Studios Website — Session Brief
 
-> Read this at the start of every session. Updated 2026-05-15 (admin creds set in Vercel prod, legacy ADMIN_EMAILS removed; next up = step 6 transactional emails).
+> Read this at the start of every session. Updated 2026-05-15 PM (step 6 transactional emails landed; next up = deliverability hardening + admin-deliverable-to-wrong-video bug).
 
 ## Start-of-session checklist for the assistant
 
@@ -55,7 +55,7 @@
 | 4. Photo upload form (direct-to-Supabase signed URLs) + per-video vibe picker | ✅ |
 | 5. `/admin` dashboard (HTTP Basic Auth gated) | ✅ |
 | 5b. Finished-video delivery + customer approval flow (admin uploads video → customer approves or requests revisions; revisions capped at 2) | ✅ |
-| 6. Resend emails on status transitions (incl. order link in confirmation) | ⏳ |
+| 6. Resend emails on status transitions (incl. order link in confirmation) | ✅ |
 | 7. Vercel Analytics enable | ⏳ |
 
 **Auth model decision (2026-05-13):** No customer accounts, no magic-link
@@ -102,10 +102,12 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
 
 ## Open items — priority order for next session
 
-1. **Phase 2 step 6** — Resend transactional emails on status transitions (`getResend()` already wired in `src/lib/resend.ts`). The order-confirmation email must include the bookmark link `/order/<id>?t=<token>` — that's the customer's only way back to their order if they close the success page without saving the URL.
-2. **Phase 2 step 7** — Vercel Analytics enable
-3. **Stripe LIVE mode** when ready: enable tax in Stripe → swap test keys for live keys in Vercel → final QA.
-4. **Housekeeping**: verify `lucide-react` is on the real package and not a stale fork (`npm ls lucide-react` — modern lucide is on the `0.5xx` line; the repo currently pins `^1.14.0`).
+1. **Email deliverability** — first end-to-end test landed in `BohdiSoftware@gmail.com`'s spam folder. Domain auth is SPF/DKIM via Resend (verified) but new sender = no reputation. Worth doing: keep DMARC alignment honest, add a List-Unsubscribe header on customer emails (Resend supports it), and warm the domain by sending real mail before launch. Resend dashboard shows per-message delivery state if a future test goes missing.
+2. **Bug: admin deliverable lands on wrong video on customer side** — Alex flagged during testing 2026-05-15: uploaded a finished video for video 2 in admin, and it appeared on a different video index on the customer's order page. Likely culprit in `/api/admin/orders/[id]/videos/[index]/deliverable` path validation or the admin upload UI's index handling. Reproduce on a bundle order before fixing.
+3. **Customer-side: Gmail "Send mail as" for `contact@expressitstudios.com`** — `CONTACT_FROM` was changed to `contact@…` this session so contact-form notifications show that as the inbox sender. To actually reply *from* `contact@` (not `alex@`), Alex needs to add the send-as identity in Gmail (same Resend SMTP pattern used for `alex@`).
+4. **Phase 2 step 7** — Vercel Analytics enable
+5. **Stripe LIVE mode** when ready: enable tax in Stripe → swap test keys for live keys in Vercel → final QA.
+6. **Housekeeping**: verify `lucide-react` is on the real package and not a stale fork (`npm ls lucide-react` — modern lucide is on the `0.5xx` line; the repo currently pins `^1.14.0`).
 
 ## Important conventions
 

@@ -8,7 +8,26 @@ export const metadata: Metadata = {
     "Get in touch with ExpressIt Studios. Questions about a project, custom requests, or anything else — send us a message.",
 };
 
-export default function ContactPage() {
+// Deep-link from /order/<id> can carry order context so Alex knows which
+// order the message is about without the customer needing to find their ID.
+export default async function ContactPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ order?: string; v?: string }>;
+}) {
+  const sp = await searchParams;
+  const orderShort = sp.order?.slice(0, 8);
+  const videoIndex = sp.v && /^\d+$/.test(sp.v) ? sp.v : undefined;
+
+  let initialSubject = "";
+  let initialMessage = "";
+  if (orderShort) {
+    const which = videoIndex ? ` — Video ${videoIndex}` : "";
+    initialSubject = `Order ${orderShort}${which}`;
+    initialMessage =
+      `Order: ${sp.order}${videoIndex ? `\nVideo: ${videoIndex}` : ""}\n\n`;
+  }
+
   return (
     <main className="flex-1">
       <section className="px-margin-mobile md:px-margin-desktop py-24">
@@ -28,7 +47,10 @@ export default function ContactPage() {
 
       <section className="px-margin-mobile md:px-margin-desktop pb-24">
         <div className="max-w-2xl mx-auto">
-          <ContactForm />
+          <ContactForm
+            initialSubject={initialSubject}
+            initialMessage={initialMessage}
+          />
         </div>
 
         <div className="max-w-4xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 gap-gutter">
