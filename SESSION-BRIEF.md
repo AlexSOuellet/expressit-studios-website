@@ -1,6 +1,6 @@
 # ExpressIt Studios Website — Session Brief
 
-> Read this at the start of every session. Updated 2026-05-14 (Phase 2 step 5 + finished-video delivery/approval flow done; next up = step 6 transactional emails).
+> Read this at the start of every session. Updated 2026-05-15 (admin creds set in Vercel prod, legacy ADMIN_EMAILS removed; next up = step 6 transactional emails).
 
 ## Start-of-session checklist for the assistant
 
@@ -102,17 +102,10 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
 
 ## Open items — priority order for next session
 
-1. **Set `ADMIN_USER` / `ADMIN_PASSWORD` in Vercel** (Production + Preview) — `/admin`
-   is gated by HTTP Basic Auth (`src/proxy.ts`). It fails closed: until these are
-   set in Vercel, `/admin` returns 401 in prod. `ADMIN_EMAILS` is now unused —
-   remove it from Vercel when convenient.
-   - Migration `0004_deliverables.sql` is **already applied to prod Supabase**.
-     The matching code is pushed to `main`; Vercel auto-deploys on push, so prod
-     picks it up without manual steps — just the env vars above are still needed.
-2. **Phase 2 step 6** — Resend transactional emails on status transitions (`getResend()` already wired in `src/lib/resend.ts`). The order-confirmation email must include the bookmark link `/order/<id>?t=<token>` — that's the customer's only way back to their order if they close the success page without saving the URL.
-3. **Phase 2 step 7** — Vercel Analytics enable
-4. **Stripe LIVE mode** when ready: enable tax in Stripe → swap test keys for live keys in Vercel → final QA.
-5. **Housekeeping**: verify `lucide-react` is on the real package and not a stale fork (`npm ls lucide-react` — modern lucide is on the `0.5xx` line; the repo currently pins `^1.14.0`).
+1. **Phase 2 step 6** — Resend transactional emails on status transitions (`getResend()` already wired in `src/lib/resend.ts`). The order-confirmation email must include the bookmark link `/order/<id>?t=<token>` — that's the customer's only way back to their order if they close the success page without saving the URL.
+2. **Phase 2 step 7** — Vercel Analytics enable
+3. **Stripe LIVE mode** when ready: enable tax in Stripe → swap test keys for live keys in Vercel → final QA.
+4. **Housekeeping**: verify `lucide-react` is on the real package and not a stale fork (`npm ls lucide-react` — modern lucide is on the `0.5xx` line; the repo currently pins `^1.14.0`).
 
 ## Important conventions
 
@@ -138,7 +131,6 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
 - `RESEND_API_KEY` — used by `/api/contact` and (future) order status emails. Domain `expressitstudios.com` is verified in Resend. From address = `noreply@expressitstudios.com`. To rotate, generate a new key with Sending access scoped to the domain.
 - `ADMIN_USER`, `ADMIN_PASSWORD` — HTTP Basic Auth creds for `/admin` + `/api/admin/*` (gated by `src/proxy.ts`)
-- `ADMIN_EMAILS` — **unused** (legacy; `/admin` auth moved to Basic Auth). Safe to delete from Vercel.
 
 ## CLIs available (all authenticated)
 
