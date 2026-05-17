@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, Geist, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 
@@ -55,6 +56,7 @@ export default function RootLayout({
         <SiteHeader />
         <div className="flex-1 flex flex-col pt-20">{children}</div>
         <SiteFooter />
+        <Analytics />
       </body>
     </html>
   );
