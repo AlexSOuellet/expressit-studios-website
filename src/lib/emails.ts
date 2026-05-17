@@ -2,6 +2,11 @@ import "server-only";
 import { getResend, ORDERS_FROM, ORDERS_ADMIN_TO } from "@/lib/resend";
 import { orderUrl, type OrderRow, type OrderVideoRow } from "@/lib/orders";
 import { getProductBySlug } from "@/lib/products";
+import { unsubscribeUrl } from "@/lib/email/unsubscribe";
+
+// Customer emails set Reply-To to a human inbox so replies become engagement
+// signal (Gmail uses this to score sender reputation).
+const CUSTOMER_REPLY_TO = "alex@expressitstudios.com";
 
 // Status-transition transactional emails. Every send is wrapped so a Resend
 // failure never bubbles up into the underlying order operation — we log and
@@ -34,8 +39,20 @@ async function send(args: {
   subject: string;
   html: string;
   text: string;
+  // For customer-facing sends: pass the orderId so we can attach a working
+  // List-Unsubscribe header + set Reply-To to a human inbox. Admin emails
+  // (alex-to-alex) leave these unset.
+  orderId?: string;
 }): Promise<void> {
   try {
+    const headers: Record<string, string> = {};
+    let replyTo: string | undefined;
+    if (args.orderId) {
+      const url = unsubscribeUrl(siteOrigin(), args.orderId);
+      headers["List-Unsubscribe"] = `<${url}>, <mailto:unsubscribe@expressitstudios.com?subject=unsubscribe>`;
+      headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+      replyTo = CUSTOMER_REPLY_TO;
+    }
     // The Resend SDK does NOT throw on send errors — it returns { data, error }.
     // We have to inspect the result to know whether the message was accepted.
     const result = await getResend().emails.send({
@@ -44,6 +61,8 @@ async function send(args: {
       subject: args.subject,
       html: args.html,
       text: args.text,
+      ...(replyTo ? { replyTo } : {}),
+      ...(Object.keys(headers).length ? { headers } : {}),
     });
     if (result.error) {
       console.error("[emails] send rejected", {
@@ -109,6 +128,7 @@ Save this link — it's how you'll come back to view progress and review the fin
     subject: `Your ExpressIt order — next step: send us your photos`,
     html,
     text,
+    orderId: order.id,
   });
 }
 
@@ -179,6 +199,7 @@ ${link}`;
     subject: `Your video is ready to review${which}`,
     html,
     text,
+    orderId: order.id,
   });
 }
 
@@ -255,6 +276,7 @@ ${link}`;
     subject: `Thanks — your video is ready to download`,
     html,
     text,
+    orderId: order.id,
   });
 }
 
