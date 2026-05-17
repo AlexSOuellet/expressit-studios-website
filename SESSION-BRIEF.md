@@ -104,11 +104,14 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
 
 ## Open items — priority order for next session
 
-1. **Bug: admin deliverable lands on wrong video on customer side** — Alex flagged during testing 2026-05-15: uploaded a finished video for video 2 in admin, and it appeared on a different video index on the customer's order page. Likely culprit in `/api/admin/orders/[id]/videos/[index]/deliverable` path validation or the admin upload UI's index handling. Reproduce on a bundle order before fixing.
-2. **Customer-side: Gmail "Send mail as" for `contact@expressitstudios.com`** — `CONTACT_FROM` was changed to `contact@…` this session so contact-form notifications show that as the inbox sender. To actually reply *from* `contact@` (not `alex@`), Alex needs to add the send-as identity in Gmail (same Resend SMTP pattern used for `alex@`).
-3. **Phase 2 step 7** — Vercel Analytics enable
-4. **Stripe LIVE mode** — checklist below.
-5. **Housekeeping**: verify `lucide-react` is on the real package and not a stale fork (`npm ls lucide-react` — modern lucide is on the `0.5xx` line; the repo currently pins `^1.14.0`).
+1. **Phase 2 step 7** — Vercel Analytics enable
+2. **Stripe LIVE mode** — checklist below.
+3. **Housekeeping**: verify `lucide-react` is on the real package and not a stale fork (`npm ls lucide-react` — modern lucide is on the `0.5xx` line; the repo currently pins `^1.14.0`).
+
+## Recently closed
+
+- **Wrong-video bug** (2026-05-17): hardened `/api/admin/orders/[id]/videos/[index]/deliverable-url` to take video index from the URL only (dropped `video_index` from request body), eliminating any URL/body drift. Verified by Alex on a bundle order — videos now land on the correct slot on the customer page.
+- **`CONTACT_FROM` sender** (2026-05-17): reverted from `contact@expressitstudios.com` to `Alex Ouellet <alex@expressitstudios.com>`. A real human-name sender is more trustworthy to recipients and to Gmail's spam scoring, and it avoids the Gmail "Send mail as" setup contact@ would have required.
 
 ## Email deliverability — what's in place
 

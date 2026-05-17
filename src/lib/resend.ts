@@ -15,7 +15,12 @@ export function getResend(): Resend {
   return cached;
 }
 
-export const CONTACT_FROM = "Contact Form <contact@expressitstudios.com>";
+// Send contact-form notifications from alex@ instead of a generic
+// contact@/noreply@ sender. A real human-name sender reads as more
+// trustworthy (both to the recipient and to Gmail's spam scoring), and
+// it avoids the Gmail "Send mail as" setup that contact@ would have
+// required to make replies work the same way.
+export const CONTACT_FROM = "Alex Ouellet <alex@expressitstudios.com>";
 export const CONTACT_TO = "alex@expressitstudios.com";
 
 export const ORDERS_FROM = "Orders <orders@expressitstudios.com>";
