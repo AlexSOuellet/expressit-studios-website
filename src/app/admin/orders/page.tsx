@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { listAllOrders } from "@/lib/admin";
+import { listAllOrders, resolveAdminViewMode } from "@/lib/admin";
 import { getProductBySlug, formatPrice } from "@/lib/products";
 import type { OrderStatus } from "@/lib/orders";
 
@@ -38,7 +38,7 @@ export default async function AdminOrdersPage({
   searchParams: SearchParams;
 }) {
   const { test } = await searchParams;
-  const includeTest = test === "1";
+  const { includeTest, autoPromotedToTest } = await resolveAdminViewMode(test);
   const orders = await listAllOrders({ includeTest });
 
   // Resolve product titles once.
@@ -62,10 +62,11 @@ export default async function AdminOrdersPage({
             Orders
           </h1>
           <p className="font-body text-body-md text-on-surface-variant">
+            {autoPromotedToTest && "No live orders yet — showing test. "}
             {orders.length} {orders.length === 1 ? "order" : "orders"}{" "}
             {includeTest ? "total (live + test)" : "live"}.{" "}
             <Link
-              href={includeTest ? "/admin/orders" : "/admin/orders?test=1"}
+              href={includeTest ? "/admin/orders?test=0" : "/admin/orders?test=1"}
               className="underline text-primary"
             >
               {includeTest ? "Hide test orders" : "Show test orders"}

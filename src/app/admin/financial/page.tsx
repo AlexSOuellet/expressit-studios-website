@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getFinancialSummary } from "@/lib/admin";
+import { getFinancialSummary, resolveAdminViewMode } from "@/lib/admin";
 import { getProductBySlug, formatPrice } from "@/lib/products";
 import type { OrderStatus } from "@/lib/orders";
 
@@ -37,7 +37,7 @@ export default async function FinancialPage({
   searchParams: SearchParams;
 }) {
   const { test } = await searchParams;
-  const includeTest = test === "1";
+  const { includeTest, autoPromotedToTest } = await resolveAdminViewMode(test);
   const { monthly, byProduct, byStatus } = await getFinancialSummary({
     includeTest,
   });
@@ -64,11 +64,15 @@ export default async function FinancialPage({
             Financial
           </h1>
           <p className="font-body text-body-md text-on-surface-variant">
-            Gross revenue from {includeTest ? "all" : "live"} Stripe orders.
-            Does not subtract Stripe fees (~2.9% + $0.30) — for the net view
-            open the Stripe dashboard directly.{" "}
+            {autoPromotedToTest
+              ? "No live orders yet — showing test data."
+              : `Gross revenue from ${includeTest ? "all" : "live"} Stripe orders.`}{" "}
+            Does not subtract Stripe fees (~2.9% + $0.30) — for net values
+            open the Stripe dashboard.{" "}
             <Link
-              href={includeTest ? "/admin/financial" : "/admin/financial?test=1"}
+              href={
+                includeTest ? "/admin/financial?test=0" : "/admin/financial?test=1"
+              }
               className="underline text-primary"
             >
               {includeTest ? "Hide test data" : "Show test data"}

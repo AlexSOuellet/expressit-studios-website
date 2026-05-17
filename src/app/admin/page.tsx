@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   getDashboardData,
   getRecentActivity,
+  resolveAdminViewMode,
   type PipelineCounts,
 } from "@/lib/admin";
 import { formatPrice } from "@/lib/products";
@@ -97,7 +98,7 @@ export default async function DashboardPage({
   searchParams: SearchParams;
 }) {
   const { test } = await searchParams;
-  const includeTest = test === "1";
+  const { includeTest, autoPromotedToTest } = await resolveAdminViewMode(test);
   const [{ kpis, pipeline, recentOrders }, activity] = await Promise.all([
     getDashboardData({ includeTest }),
     getRecentActivity(8, { includeTest }),
@@ -116,11 +117,13 @@ export default async function DashboardPage({
             Dashboard
           </h1>
           <p className="font-body text-body-md text-on-surface-variant">
-            {includeTest
-              ? "Including test (seeded + Stripe-test) orders."
-              : "Live-mode data only."}{" "}
+            {autoPromotedToTest
+              ? "No live orders yet — showing test data so the dashboard isn't empty."
+              : includeTest
+                ? "Including test (seeded + Stripe-test) orders."
+                : "Live-mode data only."}{" "}
             <Link
-              href={includeTest ? "/admin" : "/admin?test=1"}
+              href={includeTest ? "/admin?test=0" : "/admin?test=1"}
               className="underline text-primary"
             >
               {includeTest ? "Hide test data" : "Show test data"}

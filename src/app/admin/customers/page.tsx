@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { listCustomers } from "@/lib/admin";
+import { listCustomers, resolveAdminViewMode } from "@/lib/admin";
 import { formatPrice } from "@/lib/products";
 
 export const metadata: Metadata = {
@@ -26,7 +26,7 @@ export default async function CustomersPage({
   searchParams: SearchParams;
 }) {
   const { test } = await searchParams;
-  const includeTest = test === "1";
+  const { includeTest, autoPromotedToTest } = await resolveAdminViewMode(test);
   const customers = await listCustomers({ includeTest });
 
   return (
@@ -40,11 +40,16 @@ export default async function CustomersPage({
             Customers
           </h1>
           <p className="font-body text-body-md text-on-surface-variant">
+            {autoPromotedToTest
+              ? "No live customers yet — showing test data. "
+              : ""}
             {customers.length}{" "}
             {customers.length === 1 ? "customer" : "customers"} with{" "}
             {includeTest ? "any" : "live"} orders, sorted by total spent.{" "}
             <Link
-              href={includeTest ? "/admin/customers" : "/admin/customers?test=1"}
+              href={
+                includeTest ? "/admin/customers?test=0" : "/admin/customers?test=1"
+              }
               className="underline text-primary"
             >
               {includeTest ? "Hide test data" : "Show test data"}

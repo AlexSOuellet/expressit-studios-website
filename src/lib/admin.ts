@@ -193,6 +193,28 @@ export type CustomerSummary = {
   lastOrderAt: string;
 };
 
+// Until the first real customer pays, the admin dashboard has no live data
+// to render — so auto-flip to "include test" so it isn't a wall of empty
+// states during pre-launch QA. The moment a real Stripe payment hits the
+// orders table with livemode=true, the default flips back to live-only and
+// the explicit ?test=1 takes over for the rare future QA moment.
+export async function resolveAdminViewMode(
+  test: string | undefined
+): Promise<{ includeTest: boolean; autoPromotedToTest: boolean }> {
+  if (test === "1") return { includeTest: true, autoPromotedToTest: false };
+  if (test === "0") return { includeTest: false, autoPromotedToTest: false };
+
+  // Cheap probe: do we have any live orders at all?
+  const supabase = supabaseAdmin();
+  const { count } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("livemode", true);
+
+  if ((count ?? 0) > 0) return { includeTest: false, autoPromotedToTest: false };
+  return { includeTest: true, autoPromotedToTest: true };
+}
+
 export type ActivityItem = {
   id: string;
   orderId: string;
