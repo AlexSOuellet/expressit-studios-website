@@ -46,14 +46,7 @@ export default async function ContactPage({
       </section>
 
       <section className="px-margin-mobile md:px-margin-desktop pb-24">
-        <div className="max-w-2xl mx-auto">
-          <ContactForm
-            initialSubject={initialSubject}
-            initialMessage={initialMessage}
-          />
-        </div>
-
-        <div className="max-w-4xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 gap-gutter">
+        <div className="max-w-4xl mx-auto mb-12 grid grid-cols-1 md:grid-cols-2 gap-gutter">
           <div className="glass-card rounded-xl p-8 border-l-2 border-primary/30">
             <Clock
               className="h-7 w-7 text-primary mb-4"
@@ -80,6 +73,13 @@ export default async function ContactPage({
               Dropbox / Drive link, and any notes on vibe, music, or style.
             </p>
           </div>
+        </div>
+
+        <div className="max-w-2xl mx-auto">
+          <ContactForm
+            initialSubject={initialSubject}
+            initialMessage={initialMessage}
+          />
         </div>
       </section>
     </main>
