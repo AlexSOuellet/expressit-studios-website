@@ -1,6 +1,6 @@
 # ExpressIt Studios Website — Session Brief
 
-> Read this at the start of every session. Updated 2026-05-15 PM (step 6 transactional emails landed; next up = deliverability hardening + admin-deliverable-to-wrong-video bug).
+> Read this at the start of every session. Updated 2026-05-17 (email deliverability headers + DMARC fix + livemode column + wipe-test-data script landed; next up = admin-deliverable-to-wrong-video bug).
 
 ## Start-of-session checklist for the assistant
 
@@ -56,6 +56,8 @@
 | 5. `/admin` dashboard (HTTP Basic Auth gated) | ✅ |
 | 5b. Finished-video delivery + customer approval flow (admin uploads video → customer approves or requests revisions; revisions capped at 2) | ✅ |
 | 6. Resend emails on status transitions (incl. order link in confirmation) | ✅ |
+| 6b. Deliverability: Reply-To + List-Unsubscribe headers + DMARC `rua` to alex@ + unsubscribe route/page + `orders.unsubscribed_at` | ✅ |
+| 6c. Live/test data separation: `orders.livemode` + admin filter + `npm run wipe:test` | ✅ |
 | 7. Vercel Analytics enable | ⏳ |
 
 **Auth model decision (2026-05-13):** No customer accounts, no magic-link
@@ -102,12 +104,43 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
 
 ## Open items — priority order for next session
 
-1. **Email deliverability** — first end-to-end test landed in `BohdiSoftware@gmail.com`'s spam folder. Domain auth is SPF/DKIM via Resend (verified) but new sender = no reputation. Worth doing: keep DMARC alignment honest, add a List-Unsubscribe header on customer emails (Resend supports it), and warm the domain by sending real mail before launch. Resend dashboard shows per-message delivery state if a future test goes missing.
-2. **Bug: admin deliverable lands on wrong video on customer side** — Alex flagged during testing 2026-05-15: uploaded a finished video for video 2 in admin, and it appeared on a different video index on the customer's order page. Likely culprit in `/api/admin/orders/[id]/videos/[index]/deliverable` path validation or the admin upload UI's index handling. Reproduce on a bundle order before fixing.
-3. **Customer-side: Gmail "Send mail as" for `contact@expressitstudios.com`** — `CONTACT_FROM` was changed to `contact@…` this session so contact-form notifications show that as the inbox sender. To actually reply *from* `contact@` (not `alex@`), Alex needs to add the send-as identity in Gmail (same Resend SMTP pattern used for `alex@`).
-4. **Phase 2 step 7** — Vercel Analytics enable
-5. **Stripe LIVE mode** when ready: enable tax in Stripe → swap test keys for live keys in Vercel → final QA.
-6. **Housekeeping**: verify `lucide-react` is on the real package and not a stale fork (`npm ls lucide-react` — modern lucide is on the `0.5xx` line; the repo currently pins `^1.14.0`).
+1. **Bug: admin deliverable lands on wrong video on customer side** — Alex flagged during testing 2026-05-15: uploaded a finished video for video 2 in admin, and it appeared on a different video index on the customer's order page. Likely culprit in `/api/admin/orders/[id]/videos/[index]/deliverable` path validation or the admin upload UI's index handling. Reproduce on a bundle order before fixing.
+2. **Customer-side: Gmail "Send mail as" for `contact@expressitstudios.com`** — `CONTACT_FROM` was changed to `contact@…` this session so contact-form notifications show that as the inbox sender. To actually reply *from* `contact@` (not `alex@`), Alex needs to add the send-as identity in Gmail (same Resend SMTP pattern used for `alex@`).
+3. **Phase 2 step 7** — Vercel Analytics enable
+4. **Stripe LIVE mode** — checklist below.
+5. **Housekeeping**: verify `lucide-react` is on the real package and not a stale fork (`npm ls lucide-react` — modern lucide is on the `0.5xx` line; the repo currently pins `^1.14.0`).
+
+## Email deliverability — what's in place
+
+- ✅ SPF (`include:amazonses.com` on `send.expressitstudios.com`) + DKIM (`resend._domainkey`) verified via Resend.
+- ✅ DMARC `p=quarantine` with `rua`/`ruf` pointing at `alex@expressitstudios.com` (`fo=1` for any-mech failure reporting). Reports land in Gmail.
+- ✅ Customer emails (order confirmation, awaiting-approval, delivered-thanks) carry `Reply-To: alex@expressitstudios.com` + `List-Unsubscribe` (mailto + one-click HTTPS) + `List-Unsubscribe-Post: List-Unsubscribe=One-Click`.
+- ✅ `/api/email/unsubscribe` (GET + POST) verifies an HMAC token keyed off the order id (signed with `SUPABASE_SECRET_KEY`) and flips `orders.unsubscribed_at`. Confirmation page at `/email/unsubscribed`.
+- ⏳ **Domain warming (manual, operational)** — first real send hit spam because the domain has no Gmail reputation yet. Plan: do real test purchases through the live site after launch, mark "Not Spam" on any that miss inbox. After ~10–20 real sends, reputation stabilizes.
+
+## Stripe live-mode launch checklist
+
+Run these in order. **Don't shortcut** — Stripe test cards (`4242…`) don't work in live mode.
+
+1. **Wipe test data** so the admin dashboard is clean on day one:
+   ```
+   npm run wipe:test
+   ```
+   Deletes every `orders.livemode=false` row, its `order_videos`/`uploads`, and storage files in both private buckets. Confirmation prompt; pass `--yes` to skip. Script lives at `scripts/wipe-test-data.mjs`.
+2. **Enable Stripe Tax** in the Stripe dashboard (this has to happen before live).
+3. **Add a live-mode webhook endpoint** in Stripe → Developers → Webhooks → "Add endpoint" → URL `https://expressitstudios.com/api/stripe/webhook` → event `checkout.session.completed`. Copy the new signing secret.
+4. **Swap keys in Vercel — Production env only.** Leave Preview + Development on test keys so PR previews and `npm run dev` can never charge real cards. Update: `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET` (the new live one).
+5. **Redeploy** prod (Vercel will auto-deploy on next push, or hit Redeploy in the dashboard).
+6. **Smoke test with real money you own.** Buy the cheapest product ($24.99 Custom Memory Video) on `expressitstudios.com` with your own card. Verify: order row created with `livemode=true`, confirmation email arrives, upload flow works end-to-end, admin sees it, you can deliver + approve.
+7. **Refund yourself** in Stripe. ~$1 in unrefundable fees — cost of doing business.
+8. **Announce.**
+
+## Test data — keeping live + test separate
+
+- `orders.livemode` (boolean) is set from `session.livemode` by the webhook. True = real money, false = test/CLI/localhost.
+- Admin dashboard at `/admin` defaults to live-only. `/admin?test=1` shows everything; test rows get an amber **TEST** chip.
+- Localhost dev stays on Stripe **test** keys forever. Test orders accumulate in the DB but stay hidden from admin.
+- Clean them out anytime with `npm run wipe:test`.
 
 ## Important conventions
 
