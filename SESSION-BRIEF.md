@@ -105,9 +105,10 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
 ## Open items — priority order for next session
 
 1. **Stripe LIVE mode** — checklist below.
-2. **Housekeeping**: verify `lucide-react` is on the real package and not a stale fork (`npm ls lucide-react` — modern lucide is on the `0.5xx` line; the repo currently pins `^1.14.0`).
 
 ## Recently closed
+
+- **lucide-react sanity check** (2026-05-17): `^1.14.0` is the real maintained package (homepage lucide.dev, maintainer `ericfennis`). Lucide cut a 1.0 major; the older `0.5xx` line was pre-1.0. Bumped to `1.16.0` to catch the latest minor.
 
 - **Wrong-video bug** (2026-05-17): hardened `/api/admin/orders/[id]/videos/[index]/deliverable-url` to take video index from the URL only (dropped `video_index` from request body), eliminating any URL/body drift. Verified by Alex on a bundle order — videos now land on the correct slot on the customer page.
 - **`CONTACT_FROM` sender** (2026-05-17): reverted from `contact@expressitstudios.com` to `Alex Ouellet <alex@expressitstudios.com>`. A real human-name sender is more trustworthy to recipients and to Gmail's spam scoring, and it avoids the Gmail "Send mail as" setup contact@ would have required.
