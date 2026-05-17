@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { getProductsByCategory } from "@/lib/products";
 import { ProductCard } from "@/components/product/product-card";
+import { ReelSlider, type Reel } from "@/components/home/reel-slider";
 
 export const metadata: Metadata = {
   title: "Business — Cinematic Product Video Ads",
@@ -9,24 +9,15 @@ export const metadata: Metadata = {
     "Custom product video ads built for TikTok, Instagram, YouTube, and your ecommerce store. Cinematic motion graphics, 24–48 hour delivery.",
 };
 
-const SAMPLES = [
-  { src: "/samples/business/hyper-motion.mp4", label: "Hyper Motion" },
-  { src: "/samples/business/tv-spot-1.mp4", label: "TV Spot — Sneaker" },
+// Hero uses the landscape TV spot so a full-bleed background reads correctly
+// instead of being cropped/zoomed (the vertical reels were unusable as bg).
+// Slider below covers the rest — no duplicate of the hero in the slider.
+const HERO_REEL = "/samples/business/tv-spot-1.mp4";
+
+const REELS: Reel[] = [
+  { src: "/samples/business/etsy-product-reel.mp4", label: "Etsy Product Reel" },
+  { src: "/samples/business/ugc.mp4", label: "UGC Ad" },
   { src: "/samples/business/tv-spot-2.mp4", label: "TV Spot — Macro" },
-];
-
-const STILLS = [
-  { src: "/examples/business/runner.png", alt: "Runner product ad still" },
-  { src: "/examples/business/shatter.png", alt: "Shatter effect product ad" },
-  { src: "/examples/business/energy-ring.png", alt: "Energy ring product ad" },
-  { src: "/examples/business/tv-macro.png", alt: "Macro product detail still" },
-  { src: "/examples/business/tv-barn.png", alt: "Cinematic barn shot still" },
-  { src: "/examples/business/tv-wheat.png", alt: "Wheat field commercial still" },
-];
-
-const BEFORE_AFTERS = [
-  { src: "/examples/business/before-after-1.png", alt: "Before / after — product 1" },
-  { src: "/examples/business/before-after-2.png", alt: "Before / after — product 2" },
 ];
 
 export default async function BusinessPage() {
@@ -34,19 +25,33 @@ export default async function BusinessPage() {
 
   return (
     <main className="flex-1">
-      {/* Hero */}
-      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden pt-12">
-        <div className="absolute inset-0 -z-10">
-          <Image
-            src="/hero/business.png"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover opacity-40"
+      {/* Hero — video plays at its natural aspect (no zoom/crop) with a
+          blurred copy filling the letterbox so the bg still feels alive. */}
+      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden pt-12 bg-black">
+        <div className="absolute inset-0">
+          {/* Blurred backdrop covers the full area */}
+          <video
+            src={HERO_REEL}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
             aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-50"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-background/60" />
+          {/* Sharp video at natural aspect — no crop */}
+          <video
+            src={HERO_REEL}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-contain opacity-80"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
         </div>
         <div className="relative z-10 max-w-5xl mx-auto text-center px-margin-mobile md:px-margin-desktop py-24">
           <span className="font-mono text-label-caps text-secondary tracking-widest uppercase block mb-4">
@@ -62,10 +67,10 @@ export default async function BusinessPage() {
         </div>
       </section>
 
-      {/* Recent work — video reels */}
-      <section className="px-margin-mobile md:px-margin-desktop py-24">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-12 text-center">
+      {/* Sample reels — one at a time, real size */}
+      <section className="px-margin-mobile md:px-margin-desktop py-24 border-t border-white/5">
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-10 text-center">
             <span className="font-mono text-label-caps text-secondary tracking-widest uppercase block mb-3">
               Recent Work
             </span>
@@ -73,92 +78,12 @@ export default async function BusinessPage() {
               Sample reels
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-            {SAMPLES.map((sample) => (
-              <figure
-                key={sample.src}
-                className="glass-card rounded-xl overflow-hidden"
-              >
-                <video
-                  src={sample.src}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  preload="metadata"
-                  className="w-full aspect-[9/16] object-cover bg-surface-container-lowest"
-                />
-                <figcaption className="font-mono text-label-caps text-on-surface-variant uppercase tracking-widest px-4 py-3 border-t border-white/5">
-                  {sample.label}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stills grid */}
-      <section className="px-margin-mobile md:px-margin-desktop pb-24">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-12 text-center">
-            <span className="font-mono text-label-caps text-secondary tracking-widest uppercase block mb-3">
-              Frame Library
-            </span>
-            <h2 className="font-display text-headline-xl text-on-surface leading-none">
-              Cinematic stills
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-gutter">
-            {STILLS.map((still) => (
-              <div
-                key={still.src}
-                className="relative aspect-square overflow-hidden rounded-xl glass-card"
-              >
-                <Image
-                  src={still.src}
-                  alt={still.alt}
-                  fill
-                  sizes="(min-width: 768px) 33vw, 50vw"
-                  className="object-cover"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Before / after */}
-      <section className="px-margin-mobile md:px-margin-desktop pb-24">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-12 text-center">
-            <span className="font-mono text-label-caps text-secondary tracking-widest uppercase block mb-3">
-              Photo to Film
-            </span>
-            <h2 className="font-display text-headline-xl text-on-surface leading-none">
-              Before &amp; after
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
-            {BEFORE_AFTERS.map((b) => (
-              <div
-                key={b.src}
-                className="relative aspect-[4/3] overflow-hidden rounded-xl glass-card"
-              >
-                <Image
-                  src={b.src}
-                  alt={b.alt}
-                  fill
-                  sizes="(min-width: 768px) 50vw, 100vw"
-                  className="object-cover"
-                />
-              </div>
-            ))}
-          </div>
+          <ReelSlider reels={REELS} />
         </div>
       </section>
 
       {/* Product */}
-      <section className="px-margin-mobile md:px-margin-desktop pb-24">
+      <section className="px-margin-mobile md:px-margin-desktop pb-24 pt-12 border-t border-white/5">
         <div className="max-w-7xl mx-auto">
           <div className="mb-12 text-center">
             <span className="font-mono text-label-caps text-secondary tracking-widest uppercase block mb-3">
