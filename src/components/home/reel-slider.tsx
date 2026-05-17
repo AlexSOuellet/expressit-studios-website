@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Volume2, VolumeX } from "lucide-react";
 
 export type Reel = { src: string; label: string };
 
@@ -11,12 +11,23 @@ export type Reel = { src: string; label: string };
 // reel actually has room to read as itself.
 export function ReelSlider({ reels }: { reels: Reel[] }) {
   const [i, setI] = useState(0);
+  // Mute defaults to true: autoplay policy requires it. User taps the
+  // volume button to opt in to sound, and the preference persists as the
+  // slider moves between reels.
+  const [muted, setMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const count = reels.length;
 
   const go = useCallback(
     (next: number) => setI(((next % count) + count) % count),
     [count]
   );
+
+  // When the user unmutes the first time, the new <video> element on
+  // every subsequent slide needs to re-apply that preference.
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.muted = muted;
+  }, [muted, i]);
 
   if (count === 0) return null;
 
@@ -30,10 +41,11 @@ export function ReelSlider({ reels }: { reels: Reel[] }) {
             unplayable on click. */}
         <video
           key={current.src}
+          ref={videoRef}
           src={current.src}
           autoPlay
           loop
-          muted
+          muted={muted}
           playsInline
           preload="auto"
           className="absolute inset-0 w-full h-full object-contain"
@@ -51,6 +63,20 @@ export function ReelSlider({ reels }: { reels: Reel[] }) {
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-50 -z-0"
         />
+
+        <button
+          type="button"
+          onClick={() => setMuted((m) => !m)}
+          aria-label={muted ? "Unmute" : "Mute"}
+          aria-pressed={!muted}
+          className="absolute top-4 right-4 z-10 p-2.5 rounded-full bg-black/60 backdrop-blur text-white hover:bg-black/80 transition-colors"
+        >
+          {muted ? (
+            <VolumeX className="h-5 w-5" aria-hidden="true" />
+          ) : (
+            <Volume2 className="h-5 w-5" aria-hidden="true" />
+          )}
+        </button>
 
         {count > 1 && (
           <>

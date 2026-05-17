@@ -166,3 +166,284 @@ export function deriveOrderStatus(
   }
   return least;
 }
+
+// ───────────────────────────────────────────────────────────────────────────
+// Dashboard helpers — KPIs, customer aggregation, recent activity.
+// All numbers come from Supabase (orders.price_cents reflects exactly what
+// Stripe charged). For Stripe-side fee/net breakdown we'd hit the Stripe API,
+// not built yet — see SESSION-BRIEF.
+// ───────────────────────────────────────────────────────────────────────────
+
+export type DashboardKpis = {
+  revenueAllTimeCents: number;
+  revenueThisMonthCents: number;
+  revenueThisWeekCents: number;
+  ordersAllTime: number;
+  ordersActive: number; // anything not delivered
+  ordersAwaitingMe: number; // photos_received OR revisions_requested OR in_editing
+};
+
+export type PipelineCounts = Record<OrderStatus, number>;
+
+export type CustomerSummary = {
+  email: string;
+  orderCount: number;
+  totalSpentCents: number;
+  firstOrderAt: string;
+  lastOrderAt: string;
+};
+
+export type ActivityItem = {
+  id: string;
+  orderId: string;
+  type: "order_placed" | "photos_submitted" | "delivered" | "revisions_requested";
+  at: string;
+  detail: string;
+};
+
+function startOfWeek(now = new Date()): Date {
+  // Sunday-anchored to match Stripe's week boundaries; simple, no library.
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - d.getDay());
+  return d;
+}
+
+function startOfMonth(now = new Date()): Date {
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+}
+
+export async function getDashboardData(): Promise<{
+  kpis: DashboardKpis;
+  pipeline: PipelineCounts;
+  recentOrders: AdminOrderListItem[];
+}> {
+  const supabase = supabaseAdmin();
+  const { data } = await supabase
+    .from("orders")
+    .select("*, videos:order_videos(video_index, status)")
+    .eq("livemode", true)
+    .order("created_at", { ascending: false });
+  const orders = (data ?? []) as AdminOrderListItem[];
+
+  const weekStart = startOfWeek().getTime();
+  const monthStart = startOfMonth().getTime();
+
+  let revenueAllTimeCents = 0;
+  let revenueThisMonthCents = 0;
+  let revenueThisWeekCents = 0;
+  let ordersActive = 0;
+  let ordersAwaitingMe = 0;
+  const pipeline: PipelineCounts = {
+    awaiting_photos: 0,
+    photos_received: 0,
+    in_editing: 0,
+    awaiting_approval: 0,
+    revisions_requested: 0,
+    delivered: 0,
+  };
+
+  for (const o of orders) {
+    revenueAllTimeCents += o.price_cents;
+    const t = new Date(o.created_at).getTime();
+    if (t >= monthStart) revenueThisMonthCents += o.price_cents;
+    if (t >= weekStart) revenueThisWeekCents += o.price_cents;
+    pipeline[o.status] += 1;
+    if (o.status !== "delivered") ordersActive += 1;
+    if (
+      o.status === "photos_received" ||
+      o.status === "in_editing" ||
+      o.status === "revisions_requested"
+    ) {
+      ordersAwaitingMe += 1;
+    }
+  }
+
+  return {
+    kpis: {
+      revenueAllTimeCents,
+      revenueThisMonthCents,
+      revenueThisWeekCents,
+      ordersAllTime: orders.length,
+      ordersActive,
+      ordersAwaitingMe,
+    },
+    pipeline,
+    recentOrders: orders.slice(0, 5),
+  };
+}
+
+export async function listCustomers(): Promise<CustomerSummary[]> {
+  const supabase = supabaseAdmin();
+  const { data } = await supabase
+    .from("orders")
+    .select("customer_email, price_cents, created_at")
+    .eq("livemode", true)
+    .order("created_at", { ascending: false });
+  const rows =
+    (data as { customer_email: string; price_cents: number; created_at: string }[]) ?? [];
+
+  const byEmail = new Map<string, CustomerSummary>();
+  for (const r of rows) {
+    const key = r.customer_email.toLowerCase();
+    const existing = byEmail.get(key);
+    if (!existing) {
+      byEmail.set(key, {
+        email: r.customer_email,
+        orderCount: 1,
+        totalSpentCents: r.price_cents,
+        firstOrderAt: r.created_at,
+        lastOrderAt: r.created_at,
+      });
+    } else {
+      existing.orderCount += 1;
+      existing.totalSpentCents += r.price_cents;
+      if (r.created_at < existing.firstOrderAt) existing.firstOrderAt = r.created_at;
+      if (r.created_at > existing.lastOrderAt) existing.lastOrderAt = r.created_at;
+    }
+  }
+
+  return [...byEmail.values()].sort(
+    (a, b) => b.totalSpentCents - a.totalSpentCents
+  );
+}
+
+export type FinancialSummary = {
+  monthly: { month: string; revenueCents: number; orderCount: number }[];
+  byProduct: { slug: string; revenueCents: number; orderCount: number }[];
+  byStatus: { status: OrderStatus; revenueCents: number; orderCount: number }[];
+};
+
+export async function getFinancialSummary(): Promise<FinancialSummary> {
+  const supabase = supabaseAdmin();
+  const { data } = await supabase
+    .from("orders")
+    .select("price_cents, product_slug, status, created_at")
+    .eq("livemode", true)
+    .order("created_at", { ascending: false });
+  const rows = (data ?? []) as {
+    price_cents: number;
+    product_slug: string;
+    status: OrderStatus;
+    created_at: string;
+  }[];
+
+  const monthlyMap = new Map<string, { revenueCents: number; orderCount: number }>();
+  const productMap = new Map<string, { revenueCents: number; orderCount: number }>();
+  const statusMap = new Map<OrderStatus, { revenueCents: number; orderCount: number }>();
+
+  for (const r of rows) {
+    const d = new Date(r.created_at);
+    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const m = monthlyMap.get(monthKey) ?? { revenueCents: 0, orderCount: 0 };
+    m.revenueCents += r.price_cents;
+    m.orderCount += 1;
+    monthlyMap.set(monthKey, m);
+
+    const p = productMap.get(r.product_slug) ?? { revenueCents: 0, orderCount: 0 };
+    p.revenueCents += r.price_cents;
+    p.orderCount += 1;
+    productMap.set(r.product_slug, p);
+
+    const s = statusMap.get(r.status) ?? { revenueCents: 0, orderCount: 0 };
+    s.revenueCents += r.price_cents;
+    s.orderCount += 1;
+    statusMap.set(r.status, s);
+  }
+
+  return {
+    monthly: [...monthlyMap.entries()]
+      .sort(([a], [b]) => (a < b ? 1 : -1))
+      .map(([month, v]) => ({ month, ...v })),
+    byProduct: [...productMap.entries()]
+      .map(([slug, v]) => ({ slug, ...v }))
+      .sort((a, b) => b.revenueCents - a.revenueCents),
+    byStatus: [...statusMap.entries()]
+      .map(([status, v]) => ({ status, ...v }))
+      .sort((a, b) => b.revenueCents - a.revenueCents),
+  };
+}
+
+export async function getRecentActivity(limit = 12): Promise<ActivityItem[]> {
+  const supabase = supabaseAdmin();
+  // Orders themselves are the placement events.
+  const { data: orderRows } = await supabase
+    .from("orders")
+    .select("id, customer_email, created_at, price_cents")
+    .eq("livemode", true)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  // For per-video lifecycle events we use submitted_at + status to reconstruct.
+  const { data: videoRows } = await supabase
+    .from("order_videos")
+    .select(
+      "order_id, video_index, status, submitted_at, revision_note, revision_count, orders!inner(livemode, customer_email)"
+    )
+    .eq("orders.livemode", true)
+    .order("submitted_at", { ascending: false, nullsFirst: false })
+    .limit(limit * 3);
+
+  const items: ActivityItem[] = [];
+
+  for (const o of (orderRows ?? []) as {
+    id: string;
+    customer_email: string;
+    created_at: string;
+    price_cents: number;
+  }[]) {
+    items.push({
+      id: `placed:${o.id}`,
+      orderId: o.id,
+      type: "order_placed",
+      at: o.created_at,
+      detail: `${o.customer_email} placed an order ($${(o.price_cents / 100).toFixed(2)})`,
+    });
+  }
+
+  // Supabase types the joined `orders` as an array even for a single-row
+  // !inner relation. Pull the first (only) row out, defensively.
+  type VideoActivityRow = {
+    order_id: string;
+    video_index: number;
+    status: OrderVideoStatus;
+    submitted_at: string | null;
+    revision_note: string | null;
+    revision_count: number;
+    orders: { customer_email: string }[] | { customer_email: string } | null;
+  };
+  for (const v of (videoRows ?? []) as unknown as VideoActivityRow[]) {
+    const customerEmail = Array.isArray(v.orders)
+      ? v.orders[0]?.customer_email
+      : v.orders?.customer_email;
+    if (!customerEmail) continue;
+    if (v.status === "photos_received" && v.submitted_at) {
+      items.push({
+        id: `photos:${v.order_id}:${v.video_index}`,
+        orderId: v.order_id,
+        type: "photos_submitted",
+        at: v.submitted_at,
+        detail: `${customerEmail} submitted photos for video ${v.video_index}`,
+      });
+    }
+    if (v.status === "delivered") {
+      items.push({
+        id: `delivered:${v.order_id}:${v.video_index}`,
+        orderId: v.order_id,
+        type: "delivered",
+        at: v.submitted_at ?? new Date().toISOString(),
+        detail: `Video ${v.video_index} delivered to ${customerEmail}`,
+      });
+    }
+    if (v.status === "revisions_requested") {
+      items.push({
+        id: `revisions:${v.order_id}:${v.video_index}`,
+        orderId: v.order_id,
+        type: "revisions_requested",
+        at: v.submitted_at ?? new Date().toISOString(),
+        detail: `${customerEmail} requested revisions on video ${v.video_index} (#${v.revision_count})`,
+      });
+    }
+  }
+
+  return items.sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, limit);
+}
