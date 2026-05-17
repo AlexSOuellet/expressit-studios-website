@@ -1,6 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
-import { Play } from "lucide-react";
 
 export function Hero() {
   return (
@@ -32,26 +30,11 @@ export function Hero() {
           Stories
         </h1>
 
-        <p className="font-body text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-12">
+        <p className="font-body text-body-lg text-on-surface-variant max-w-2xl mx-auto">
           We transform your static captures into high-fidelity narrative films
           using state-of-the-art enhancement and avant-garde editing
           techniques.
         </p>
-
-        <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-          <Link
-            href="/business"
-            className="primary-gradient text-on-primary-fixed font-mono text-ui-mono px-12 py-4 rounded-lg uppercase inline-flex items-center gap-2 hover:opacity-95 transition-opacity"
-          >
-            Start Your Video <Play className="h-4 w-4" aria-hidden="true" />
-          </Link>
-          <Link
-            href="/personal"
-            className="glass-card text-on-surface font-mono text-ui-mono px-12 py-4 rounded-lg uppercase hover:border-primary/50 transition-colors"
-          >
-            View Reel
-          </Link>
-        </div>
       </div>
     </section>
   );

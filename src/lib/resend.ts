@@ -23,5 +23,8 @@ export function getResend(): Resend {
 export const CONTACT_FROM = "Alex Ouellet <alex@expressitstudios.com>";
 export const CONTACT_TO = "alex@expressitstudios.com";
 
-export const ORDERS_FROM = "Orders <orders@expressitstudios.com>";
+// Named-human From scores better with Gmail's spam filter than a generic
+// role account like Orders <orders@…>. The mailbox is the same (alex@) so
+// replies still route to Alex; only the display name changes.
+export const ORDERS_FROM = "Alex at ExpressIt Studios <alex@expressitstudios.com>";
 export const ORDERS_ADMIN_TO = "alex@expressitstudios.com";

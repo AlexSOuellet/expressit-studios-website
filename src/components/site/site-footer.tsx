@@ -52,7 +52,7 @@ export function SiteFooter() {
           </Link>
 
           <p className="font-mono text-label-caps text-outline order-1 md:order-2 text-center uppercase tracking-widest">
-            © {year} EXPRESSIT STUDIOS · THE ART OF MOTION
+            © {year} EXPRESSIT STUDIOS
           </p>
 
           <div className="flex justify-center md:justify-end gap-3 order-3">

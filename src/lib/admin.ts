@@ -298,8 +298,15 @@ export async function getDashboardData(
   };
 }
 
+export type CustomerSortKey = "lastOrder" | "firstOrder" | "spent" | "orders" | "email";
+export type SortDir = "asc" | "desc";
+
 export async function listCustomers(
-  opts: { includeTest?: boolean } = {}
+  opts: {
+    includeTest?: boolean;
+    sort?: CustomerSortKey;
+    dir?: SortDir;
+  } = {}
 ): Promise<CustomerSummary[]> {
   const supabase = supabaseAdmin();
   let q = supabase
@@ -331,9 +338,23 @@ export async function listCustomers(
     }
   }
 
-  return [...byEmail.values()].sort(
-    (a, b) => b.totalSpentCents - a.totalSpentCents
-  );
+  const sort = opts.sort ?? "lastOrder";
+  const dir = opts.dir ?? "desc";
+  const sign = dir === "asc" ? 1 : -1;
+  return [...byEmail.values()].sort((a, b) => {
+    switch (sort) {
+      case "lastOrder":
+        return sign * (a.lastOrderAt < b.lastOrderAt ? -1 : a.lastOrderAt > b.lastOrderAt ? 1 : 0);
+      case "firstOrder":
+        return sign * (a.firstOrderAt < b.firstOrderAt ? -1 : a.firstOrderAt > b.firstOrderAt ? 1 : 0);
+      case "spent":
+        return sign * (a.totalSpentCents - b.totalSpentCents);
+      case "orders":
+        return sign * (a.orderCount - b.orderCount);
+      case "email":
+        return sign * a.email.localeCompare(b.email);
+    }
+  });
 }
 
 export type FinancialSummary = {

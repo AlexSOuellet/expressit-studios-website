@@ -78,9 +78,15 @@ export default async function CheckoutSuccessPage({
           </div>
         )}
 
-        <p className="font-body text-body-sm text-on-surface-variant mb-6">
+        <p className="font-body text-body-sm text-on-surface-variant mb-3">
           Bookmark this link — it&rsquo;s your private page for this order.
           We&rsquo;ll also email it to you.
+        </p>
+        <p className="font-body text-body-sm text-outline mb-6">
+          📬 Don&rsquo;t see our email in a few minutes?{" "}
+          <strong>Check your spam folder</strong> — we&rsquo;re a new sender
+          so messages occasionally land there. Marking it &ldquo;Not
+          spam&rdquo; helps future emails land in your inbox.
         </p>
 
         <Link

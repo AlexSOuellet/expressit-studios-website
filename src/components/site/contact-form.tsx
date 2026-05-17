@@ -73,6 +73,10 @@ export function ContactForm({
           Thanks for reaching out. We&rsquo;ll get back to you within 24
           hours — usually much faster.
         </p>
+        <p className="font-body text-body-sm text-outline mt-4">
+          📬 Don&rsquo;t see our reply? <strong>Check your spam folder</strong>{" "}
+          — we&rsquo;re a new sender so messages occasionally land there.
+        </p>
       </div>
     );
   }

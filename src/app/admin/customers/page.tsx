@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { listCustomers, resolveAdminViewMode } from "@/lib/admin";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import {
+  listCustomers,
+  resolveAdminViewMode,
+  type CustomerSortKey,
+  type SortDir,
+} from "@/lib/admin";
 import { formatPrice } from "@/lib/products";
 
 export const metadata: Metadata = {
@@ -18,16 +24,84 @@ function formatDate(iso: string): string {
   });
 }
 
-type SearchParams = Promise<{ test?: string }>;
+type SearchParams = Promise<{
+  test?: string;
+  sort?: string;
+  dir?: string;
+}>;
+
+const VALID_SORTS: CustomerSortKey[] = [
+  "lastOrder",
+  "firstOrder",
+  "spent",
+  "orders",
+  "email",
+];
+
+function parseSort(s: string | undefined): CustomerSortKey {
+  return VALID_SORTS.includes(s as CustomerSortKey)
+    ? (s as CustomerSortKey)
+    : "lastOrder";
+}
+
+function parseDir(d: string | undefined): SortDir {
+  return d === "asc" ? "asc" : "desc";
+}
+
+function SortHeader({
+  label,
+  field,
+  currentSort,
+  currentDir,
+  test,
+  align = "left",
+}: {
+  label: string;
+  field: CustomerSortKey;
+  currentSort: CustomerSortKey;
+  currentDir: SortDir;
+  test: string | undefined;
+  align?: "left" | "right";
+}) {
+  const isActive = currentSort === field;
+  const nextDir: SortDir = isActive && currentDir === "desc" ? "asc" : "desc";
+  const params = new URLSearchParams();
+  params.set("sort", field);
+  params.set("dir", nextDir);
+  if (test === "1") params.set("test", "1");
+  if (test === "0") params.set("test", "0");
+
+  const Icon = !isActive ? ArrowUpDown : currentDir === "desc" ? ArrowDown : ArrowUp;
+
+  return (
+    <th
+      className={`px-4 py-3 font-mono text-ui-mono uppercase tracking-widest text-on-surface-variant ${
+        align === "right" ? "text-right" : "text-left"
+      }`}
+    >
+      <Link
+        href={`/admin/customers?${params.toString()}`}
+        className={`inline-flex items-center gap-1.5 hover:text-on-surface transition-colors ${
+          isActive ? "text-primary" : ""
+        }`}
+      >
+        <span>{label}</span>
+        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+      </Link>
+    </th>
+  );
+}
 
 export default async function CustomersPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const { test } = await searchParams;
+  const { test, sort: sortParam, dir: dirParam } = await searchParams;
   const { includeTest, autoPromotedToTest } = await resolveAdminViewMode(test);
-  const customers = await listCustomers({ includeTest });
+  const sort = parseSort(sortParam);
+  const dir = parseDir(dirParam);
+  const customers = await listCustomers({ includeTest, sort, dir });
 
   return (
     <main className="px-margin-mobile md:px-margin-desktop py-12">
@@ -45,7 +119,8 @@ export default async function CustomersPage({
               : ""}
             {customers.length}{" "}
             {customers.length === 1 ? "customer" : "customers"} with{" "}
-            {includeTest ? "any" : "live"} orders, sorted by total spent.{" "}
+            {includeTest ? "any" : "live"} orders. Click a column header to
+            sort.{" "}
             <Link
               href={
                 includeTest ? "/admin/customers?test=0" : "/admin/customers?test=1"
@@ -72,21 +147,45 @@ export default async function CustomersPage({
             <table className="w-full text-left">
               <thead className="bg-white/5">
                 <tr>
-                  <th className="px-4 py-3 font-mono text-ui-mono uppercase tracking-widest text-on-surface-variant">
-                    Email
-                  </th>
-                  <th className="px-4 py-3 font-mono text-ui-mono uppercase tracking-widest text-on-surface-variant text-right">
-                    Orders
-                  </th>
-                  <th className="px-4 py-3 font-mono text-ui-mono uppercase tracking-widest text-on-surface-variant text-right">
-                    Total spent
-                  </th>
-                  <th className="px-4 py-3 font-mono text-ui-mono uppercase tracking-widest text-on-surface-variant text-right">
-                    First
-                  </th>
-                  <th className="px-4 py-3 font-mono text-ui-mono uppercase tracking-widest text-on-surface-variant text-right">
-                    Last
-                  </th>
+                  <SortHeader
+                    label="Email"
+                    field="email"
+                    currentSort={sort}
+                    currentDir={dir}
+                    test={test}
+                  />
+                  <SortHeader
+                    label="Orders"
+                    field="orders"
+                    currentSort={sort}
+                    currentDir={dir}
+                    test={test}
+                    align="right"
+                  />
+                  <SortHeader
+                    label="Total spent"
+                    field="spent"
+                    currentSort={sort}
+                    currentDir={dir}
+                    test={test}
+                    align="right"
+                  />
+                  <SortHeader
+                    label="First"
+                    field="firstOrder"
+                    currentSort={sort}
+                    currentDir={dir}
+                    test={test}
+                    align="right"
+                  />
+                  <SortHeader
+                    label="Last"
+                    field="lastOrder"
+                    currentSort={sort}
+                    currentDir={dir}
+                    test={test}
+                    align="right"
+                  />
                 </tr>
               </thead>
               <tbody>
