@@ -58,7 +58,7 @@
 | 6. Resend emails on status transitions (incl. order link in confirmation) | ✅ |
 | 6b. Deliverability: Reply-To + List-Unsubscribe headers + DMARC `rua` to alex@ + unsubscribe route/page + `orders.unsubscribed_at` | ✅ |
 | 6c. Live/test data separation: `orders.livemode` + admin filter + `npm run wipe:test` | ✅ |
-| 7. Vercel Analytics enable | ⏳ |
+| 7. Vercel Analytics enable | ✅ |
 
 **Auth model decision (2026-05-13):** No customer accounts, no magic-link
 auth. Each order gets a 256-bit random `access_token` stored in the
@@ -104,9 +104,8 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
 
 ## Open items — priority order for next session
 
-1. **Phase 2 step 7** — Vercel Analytics enable
-2. **Stripe LIVE mode** — checklist below.
-3. **Housekeeping**: verify `lucide-react` is on the real package and not a stale fork (`npm ls lucide-react` — modern lucide is on the `0.5xx` line; the repo currently pins `^1.14.0`).
+1. **Stripe LIVE mode** — checklist below.
+2. **Housekeeping**: verify `lucide-react` is on the real package and not a stale fork (`npm ls lucide-react` — modern lucide is on the `0.5xx` line; the repo currently pins `^1.14.0`).
 
 ## Recently closed
 
