@@ -70,6 +70,10 @@ export default async function AdminOrdersPage({
             >
               {includeTest ? "Hide test orders" : "Show test orders"}
             </Link>
+            {" · "}
+            <Link href="/admin/wipe-test" className="underline text-primary">
+              Wipe test data
+            </Link>
           </p>
         </header>
 

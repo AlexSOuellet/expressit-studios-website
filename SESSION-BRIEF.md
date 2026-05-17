@@ -122,11 +122,11 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
 
 Run these in order. **Don't shortcut** — Stripe test cards (`4242…`) don't work in live mode.
 
-1. **Wipe test data** so the admin dashboard is clean on day one:
-   ```
-   npm run wipe:test
-   ```
-   Deletes every `orders.livemode=false` row, its `order_videos`/`uploads`, and storage files in both private buckets. Confirmation prompt; pass `--yes` to skip. Script lives at `scripts/wipe-test-data.mjs`.
+1. **Wipe test data** so the admin dashboard is clean on day one. Two ways, same result:
+   - **Browser:** open `/admin/wipe-test` → see counts → click the red "Wipe N orders now" button. Linked from the admin orders page.
+   - **CLI:** `npm run wipe:test` (confirmation prompt; pass `--yes` to skip). Script lives at `scripts/wipe-test-data.mjs`.
+
+   Both paths use the same `src/lib/admin/wipe-test.ts`. Deletes every `orders.livemode=false` row, its `order_videos`/`uploads`, and storage files in both private buckets.
 2. **Enable Stripe Tax** in the Stripe dashboard (this has to happen before live).
 3. **Add a live-mode webhook endpoint** in Stripe → Developers → Webhooks → "Add endpoint" → URL `https://expressitstudios.com/api/stripe/webhook` → event `checkout.session.completed`. Copy the new signing secret.
 4. **Swap keys in Vercel — Production env only.** Leave Preview + Development on test keys so PR previews and `npm run dev` can never charge real cards. Update: `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET` (the new live one).
@@ -140,7 +140,7 @@ Run these in order. **Don't shortcut** — Stripe test cards (`4242…`) don't w
 - `orders.livemode` (boolean) is set from `session.livemode` by the webhook. True = real money, false = test/CLI/localhost.
 - Admin dashboard at `/admin` defaults to live-only. `/admin?test=1` shows everything; test rows get an amber **TEST** chip.
 - Localhost dev stays on Stripe **test** keys forever. Test orders accumulate in the DB but stay hidden from admin.
-- Clean them out anytime with `npm run wipe:test`.
+- Clean them out anytime via `/admin/wipe-test` (button) or `npm run wipe:test` (CLI).
 
 ## Important conventions
 
