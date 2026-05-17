@@ -30,8 +30,16 @@ function formatDate(iso: string): string {
   });
 }
 
-export default async function AdminOrdersPage() {
-  const orders = await listAllOrders();
+type SearchParams = Promise<{ test?: string }>;
+
+export default async function AdminOrdersPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const { test } = await searchParams;
+  const includeTest = test === "1";
+  const orders = await listAllOrders({ includeTest });
 
   // Resolve product titles once.
   const slugs = [...new Set(orders.map((o) => o.product_slug))];
@@ -54,7 +62,14 @@ export default async function AdminOrdersPage() {
             Orders
           </h1>
           <p className="font-body text-body-md text-on-surface-variant">
-            {orders.length} {orders.length === 1 ? "order" : "orders"} total.
+            {orders.length} {orders.length === 1 ? "order" : "orders"}{" "}
+            {includeTest ? "total (live + test)" : "live"}.{" "}
+            <Link
+              href={includeTest ? "/admin" : "/admin?test=1"}
+              className="underline text-primary"
+            >
+              {includeTest ? "Hide test orders" : "Show test orders"}
+            </Link>
           </p>
         </header>
 
@@ -76,6 +91,11 @@ export default async function AdminOrdersPage() {
                   >
                     <span className="font-mono text-ui-mono uppercase tracking-wider text-on-surface">
                       #{o.id.slice(0, 8)}
+                      {!o.livemode && (
+                        <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-amber-200 text-amber-900 align-middle">
+                          TEST
+                        </span>
+                      )}
                     </span>
                     <span className="font-body text-body-md text-on-surface flex-1 min-w-[12rem]">
                       {titleBySlug.get(o.product_slug) ?? o.product_slug}

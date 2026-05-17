@@ -31,6 +31,7 @@ export type OrderRow = {
   price_cents: number;
   status: OrderStatus;
   access_token: string;
+  livemode: boolean;
   created_at: string;
 };
 

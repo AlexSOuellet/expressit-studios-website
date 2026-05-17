@@ -96,6 +96,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         options,
         price_cents: priceCents,
         status: "awaiting_photos",
+        // Stripe sets livemode on every Checkout Session: true in live mode,
+        // false in test. Mirror it so the admin dashboard can hide test rows
+        // and the wipe-test-data script has a predicate to delete on.
+        livemode: session.livemode === true,
       },
       { onConflict: "stripe_session_id", ignoreDuplicates: true }
     )

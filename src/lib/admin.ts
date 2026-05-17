@@ -38,13 +38,23 @@ export type AdminOrderDetail = OrderRow & {
 
 const SIGNED_URL_TTL = 60 * 60; // 1 hour
 
-export async function listAllOrders(): Promise<AdminOrderListItem[]> {
+export async function listAllOrders(
+  opts: { includeTest?: boolean } = {}
+): Promise<AdminOrderListItem[]> {
   const supabase = supabaseAdmin();
-  const { data, error } = await supabase
+  let query = supabase
     .from("orders")
     .select("*, videos:order_videos(video_index, status)")
     .order("created_at", { ascending: false });
 
+  // Default to live orders only so the dashboard isn't polluted with
+  // localhost / Stripe-CLI test traffic. Admin can opt in to seeing
+  // everything via ?test=1.
+  if (!opts.includeTest) {
+    query = query.eq("livemode", true);
+  }
+
+  const { data, error } = await query;
   if (error || !data) return [];
   return (data as AdminOrderListItem[]).map((o) => ({
     ...o,
