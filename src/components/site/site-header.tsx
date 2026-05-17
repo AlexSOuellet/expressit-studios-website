@@ -4,6 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 
+// "Start Project" CTA removed from header on 2026-05-17. Every category page
+// already ends in a product picker, the nav has Business/Personal entries,
+// and the hero CTAs cover the rest. Header was overcrowded.
+
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/business", label: "Business" },
@@ -56,15 +60,8 @@ export function SiteHeader() {
           })}
         </nav>
 
-        {/* Right: CTA + mobile menu */}
-        <div className="flex items-center gap-4 shrink-0 ml-auto md:ml-0">
-          <Link
-            href="/products/custom-product-video-ad"
-            className="hidden md:inline-flex primary-gradient text-on-primary-fixed font-mono text-ui-mono px-6 py-2 rounded-lg uppercase hover:opacity-90 transition-opacity"
-          >
-            Start Project
-          </Link>
-
+        {/* Right: mobile menu only */}
+        <div className="flex items-center gap-4 shrink-0 ml-auto">
           <details className="md:hidden relative">
             <summary
               className="list-none cursor-pointer p-2 rounded-md text-on-surface-variant hover:text-on-surface hover:bg-white/5"
@@ -87,12 +84,6 @@ export function SiteHeader() {
                   </Link>
                 );
               })}
-              <Link
-                href="/products/custom-product-video-ad"
-                className="primary-gradient text-on-primary-fixed font-mono text-ui-mono px-4 py-3 rounded-md uppercase mt-2 text-center"
-              >
-                Start Project
-              </Link>
             </div>
           </details>
         </div>
