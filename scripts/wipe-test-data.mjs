@@ -54,17 +54,6 @@ async function pgDelete(path) {
   if (!r.ok) throw new Error(`DELETE ${path} ${r.status}: ${await r.text()}`);
 }
 
-async function listStorage(bucket, prefix = "") {
-  // PostgREST list — same API the dashboard uses.
-  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/list/${bucket}`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ prefix, limit: 1000, sortBy: { column: "name", order: "asc" } }),
-  });
-  if (!r.ok) throw new Error(`list ${bucket} ${r.status}: ${await r.text()}`);
-  return r.json();
-}
-
 async function removeStorageFiles(bucket, paths) {
   if (paths.length === 0) return;
   const r = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}`, {

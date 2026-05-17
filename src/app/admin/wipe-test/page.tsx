@@ -17,7 +17,7 @@ type SearchParams = Promise<{
   deliverables?: string;
 }>;
 
-async function performWipe(_formData: FormData) {
+async function performWipe() {
   "use server";
   const { redirect } = await import("next/navigation");
   const result = await wipeTestData();

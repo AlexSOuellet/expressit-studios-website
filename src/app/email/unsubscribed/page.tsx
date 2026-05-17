@@ -31,23 +31,24 @@ export default async function UnsubscribedPage({
 
         {failed ? (
           <p>
-            That link didn't check out — it may have been mistyped or it's no
-            longer valid. Reach out at{" "}
+            That link didn&rsquo;t check out — it may have been mistyped or
+            it&rsquo;s no longer valid. Reach out at{" "}
             <Link href="/contact" className="underline">
               /contact
             </Link>{" "}
-            and we'll take care of it directly.
+            and we&rsquo;ll take care of it directly.
           </p>
         ) : (
           <>
             <p>
-              Done — you won't receive marketing emails from ExpressIt Studios.
+              Done — you won&rsquo;t receive marketing emails from ExpressIt
+              Studios.
             </p>
             <p className="text-body-sm text-outline">
-              Note: if you have an active order, you'll still get the
+              Note: if you have an active order, you&rsquo;ll still get the
               transactional emails for <em>that</em> order (payment confirmation,
-              "your video is ready", etc.) — those are part of the service you
-              paid for. Marketing and broadcast emails are off.
+              &ldquo;your video is ready&rdquo;, etc.) — those are part of the
+              service you paid for. Marketing and broadcast emails are off.
             </p>
             <p>
               Changed your mind?{" "}
