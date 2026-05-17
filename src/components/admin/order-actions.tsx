@@ -98,7 +98,6 @@ export function VideoAdminPanel({
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({
-              video_index: videoIndex,
               filename: file.name,
               mime: file.type,
               size: file.size,

@@ -20,8 +20,11 @@ const ALLOWED_MIME = new Set([
 
 const MAX_BYTES = 500 * 1024 * 1024; // 500 MB
 
+// The video index comes from the URL path. We deliberately do NOT accept it
+// in the body to remove any chance of URL-vs-body drift — past bug report
+// (2026-05-15) had a finished video landing on the wrong video on the
+// customer's order page; URL-only routing eliminates this whole category.
 const bodySchema = z.object({
-  video_index: z.number().int().positive(),
   filename: z.string().min(1).max(255),
   mime: z.string().min(1).max(64),
   size: z.number().int().positive().max(MAX_BYTES),
@@ -34,7 +37,7 @@ function safeFilename(name: string): string {
 
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string; index: string }> }
 ) {
   const originErr = checkOrigin(req);
   if (originErr) return originErr;
@@ -42,7 +45,11 @@ export async function POST(
   const limited = rateLimit(req, { key: "deliverable-url", limit: 60, windowMs: 10 * 60_000 });
   if (limited) return limited;
 
-  const { id } = await params;
+  const { id, index } = await params;
+  const videoIndex = Number.parseInt(index, 10);
+  if (!Number.isInteger(videoIndex) || videoIndex < 1) {
+    return NextResponse.json({ error: "Bad video index." }, { status: 400 });
+  }
 
   let parsed: z.infer<typeof bodySchema>;
   try {
@@ -63,7 +70,7 @@ export async function POST(
     .from("order_videos")
     .select("status")
     .eq("order_id", id)
-    .eq("video_index", parsed.video_index)
+    .eq("video_index", videoIndex)
     .maybeSingle();
 
   if (!video) {
@@ -76,7 +83,7 @@ export async function POST(
     );
   }
 
-  const path = `${id}/video-${parsed.video_index}/${Date.now()}-${safeFilename(
+  const path = `${id}/video-${videoIndex}/${Date.now()}-${safeFilename(
     parsed.filename
   )}`;
 
