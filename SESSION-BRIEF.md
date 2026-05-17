@@ -1,6 +1,6 @@
 # ExpressIt Studios Website — Session Brief
 
-> Read this at the start of every session. Updated 2026-05-17 (email deliverability headers + DMARC fix + livemode column + wipe-test-data script landed; next up = admin-deliverable-to-wrong-video bug).
+> Read this at the start of every session. **Updated 2026-05-17 — site is officially LIVE on Stripe with real money.** Phase 2 fully closed. Admin dashboard (Dashboard / Orders / Financial / Customers / Analytics / Wipe test) shipped. Next sessions: marketing, traffic, the upcoming "huge project" Alex is queueing up.
 
 ## Start-of-session checklist for the assistant
 
@@ -87,7 +87,7 @@ purposes — the access mechanism and the marketing list are independent.
 - ✅ `RESEND_API_KEY` set in Vercel **Production** (and rotated on 2026-05-13 — see audit doc). Preview env: needs the same key set via dashboard if/when preview deploys exercise the contact form (Vercel CLI has a non-interactive bug for the "all preview branches" path).
 - ✅ **Key rotation 2026-05-13**: `RESEND_API_KEY` rotated after the original key was pasted into a chat transcript; `SUPABASE_SECRET_KEY` rotated per audit recommendation. Both verified working locally and in production.
 - ✅ Email replaced site-wide: `AlexSOuellet@gmail.com` → `alex@expressitstudios.com` on `/privacy`, `/terms`, `/refund`, `/checkout/success`, `/process`, and both product MDX files.
-- ⏳ Stripe LIVE mode (waits on Alex enabling tax + final QA on prod)
+- ✅ **Stripe LIVE mode (2026-05-17)** — Alex flipped to live, swapped `STRIPE_SECRET_KEY` / `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` / `STRIPE_WEBHOOK_SECRET` in Vercel Production env to live values, redeployed. Live webhook destination created in Stripe pointing at `https://expressitstudios.com/api/stripe/webhook` for `checkout.session.completed`. Payment methods enabled: Card + Link + Apple/Google Pay (Klarna/Afterpay/Cash App skipped — wrong fit for $25–$200 digital goods). Bank payouts set to daily. Statement descriptor `EXPRESSIT STUDIOS`. Stripe receipt + refund emails enabled. Stripe Tax intentionally skipped (Alex has no RI sales tax permit yet; revisit if revenue grows or RI notifies).
 
 ## Security audit — closed
 
@@ -104,14 +104,36 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
 
 ## Open items — priority order for next session
 
-1. **Stripe LIVE mode** — checklist below.
+Phase 2 is closed. No critical items. Watch for:
 
-## Recently closed
+- **Email reputation warm-up** — first real customer email landed in spam. Mark Not Spam on every send to your own Gmail until reputation builds. Resend dashboard shows per-message delivery state.
+- **First refund of self-test purchase** — Alex bought $24.99 himself to verify LIVE worked end-to-end; refund in Stripe → Payments → click charge → Refund. ~$1 in unrefundable fees is the cost of confirming the prod chain works.
+- **The "huge project" Alex queued** for the next session.
 
-- **lucide-react sanity check** (2026-05-17): `^1.14.0` is the real maintained package (homepage lucide.dev, maintainer `ericfennis`). Lucide cut a 1.0 major; the older `0.5xx` line was pre-1.0. Bumped to `1.16.0` to catch the latest minor.
+Nice-to-haves whenever:
+- Logo + branding upload in Stripe Settings → Branding (skipped at launch — Alex doesn't have a logo yet).
+- Search box on /admin/orders by email/order id (useful at higher volumes).
+- Collapse "Waiting on customer" bucket by default on /admin/orders.
+- International expansion: enable currency display + iDEAL/SEPA payment methods once Vercel Analytics shows EU/UK traffic.
+- Set git author to `Alex Ouellet <alexsouellet@gmail.com>` so commits stop attributing to `BohdiSoft`.
 
-- **Wrong-video bug** (2026-05-17): hardened `/api/admin/orders/[id]/videos/[index]/deliverable-url` to take video index from the URL only (dropped `video_index` from request body), eliminating any URL/body drift. Verified by Alex on a bundle order — videos now land on the correct slot on the customer page.
-- **`CONTACT_FROM` sender** (2026-05-17): reverted from `contact@expressitstudios.com` to `Alex Ouellet <alex@expressitstudios.com>`. A real human-name sender is more trustworthy to recipients and to Gmail's spam scoring, and it avoids the Gmail "Send mail as" setup contact@ would have required.
+## Recently closed (2026-05-17 — launch day)
+
+- **Stripe LIVE mode flipped.** End-to-end live: webhook destination, live keys in Vercel Production, redeployed. Bank payouts, statement descriptor, receipt emails all configured. Stripe Tax skipped on purpose.
+- **Admin dashboard shipped.** Sidebar shell with Dashboard / Orders / Financial / Customers / Analytics (external) / Wipe test. Auto-promotes to "show test data" when zero live orders exist; flips to live-only automatically the moment a real Stripe payment lands. `?test=1` / `?test=0` overrides.
+- **Seed + wipe scripts.** `npm run seed:test` (or `scripts/seed-test-data.mjs`) creates ~20 fake orders for QA. `npm run wipe:test` or `/admin/wipe-test` button clears all `livemode=false` rows + storage files. Both share `src/lib/admin/wipe-test.ts`.
+- **Per-video status chips** on /admin/orders bundle rows replaced the misleading rollup "PHOTOS RECEIVED (0/3)" counter. Each video shows its own colored chip (V1 Photos / V2 Review / V3 Editing).
+- **Customers page sortable** by any column; default sort = last order desc so new customers surface at the top.
+- **Orders bucketed** into "Needs your attention" / "Waiting on customer" / "Delivered" (collapsed) so the admin queue matches what's actionable.
+- **Design pass on /business + /personal.** Hero is a looping reel with blurred-backdrop letterbox (no zoom on portrait reels). Single-stage `ReelSlider` (src/components/home/reel-slider.tsx) with mute-toggle replaces the 3-up grid. Killed "Cinematic stills" and "Before & after" sections.
+- **Home hero CTAs removed** — labels didn't match destinations; nav covers Business/Personal already.
+- **Footer cleanup** — dropped "· THE ART OF MOTION", added YouTube + Facebook social icons via `src/components/site/brand-icons.tsx` (inline SVGs from simpleicons.org; lucide 1.x dropped brand logos). Instagram/TikTok/LinkedIn already coded, commented out awaiting handles.
+- **Contact page**: Reply Time + What to Include cards moved above the form. Spam-folder note added to contact + checkout success pages while domain reputation warms.
+- **Email From** changed from `Orders <orders@>` to `Alex at ExpressIt Studios <alex@>` — named-human sender scores better with Gmail.
+- **lucide-react bumped** to 1.16.0 (real maintained package; old SESSION-BRIEF worry about it being a stale fork was outdated).
+- **Wrong-video bug closed.** `/api/admin/orders/[id]/videos/[index]/deliverable-url` reads video index from URL only — no body drift possible.
+- **CONTACT_FROM reverted** to `Alex Ouellet <alex@>` (more trustworthy than generic `contact@`, sidesteps Gmail "Send mail as" setup).
+- **Phase 2 step 7**: Vercel Analytics enabled (`@vercel/analytics/next` in root layout).
 
 ## Email deliverability — what's in place
 
@@ -121,22 +143,19 @@ Full audit at `project-docs/SECURITY-AUDIT-2026-05-12.md`. Status as of 2026-05-
 - ✅ `/api/email/unsubscribe` (GET + POST) verifies an HMAC token keyed off the order id (signed with `SUPABASE_SECRET_KEY`) and flips `orders.unsubscribed_at`. Confirmation page at `/email/unsubscribed`.
 - ⏳ **Domain warming (manual, operational)** — first real send hit spam because the domain has no Gmail reputation yet. Plan: do real test purchases through the live site after launch, mark "Not Spam" on any that miss inbox. After ~10–20 real sends, reputation stabilizes.
 
-## Stripe live-mode launch checklist
+## Stripe live-mode launch checklist (HISTORICAL — done 2026-05-17)
 
-Run these in order. **Don't shortcut** — Stripe test cards (`4242…`) don't work in live mode.
+Kept for reference; do not re-run. Steps performed:
 
-1. **Wipe test data** so the admin dashboard is clean on day one. Two ways, same result:
-   - **Browser:** open `/admin/wipe-test` → see counts → click the red "Wipe N orders now" button. Linked from the admin orders page.
-   - **CLI:** `npm run wipe:test` (confirmation prompt; pass `--yes` to skip). Script lives at `scripts/wipe-test-data.mjs`.
+1. Wiped test data via `/admin/wipe-test`.
+2. Skipped Stripe Tax (no RI permit yet).
+3. Created live-mode webhook destination in Stripe → URL `https://expressitstudios.com/api/stripe/webhook` → event `checkout.session.completed`.
+4. Swapped `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET` in Vercel **Production env only** (Preview/Dev stay on test keys forever so localhost + PR previews never charge real cards).
+5. Redeployed production from Vercel dashboard.
+6. Smoke-tested with real $24.99 purchase. Verified `livemode=true` order row + admin dashboard auto-flipped to live-only view.
+7. Refund pending in Stripe.
 
-   Both paths use the same `src/lib/admin/wipe-test.ts`. Deletes every `orders.livemode=false` row, its `order_videos`/`uploads`, and storage files in both private buckets.
-2. **Enable Stripe Tax** in the Stripe dashboard (this has to happen before live).
-3. **Add a live-mode webhook endpoint** in Stripe → Developers → Webhooks → "Add endpoint" → URL `https://expressitstudios.com/api/stripe/webhook` → event `checkout.session.completed`. Copy the new signing secret.
-4. **Swap keys in Vercel — Production env only.** Leave Preview + Development on test keys so PR previews and `npm run dev` can never charge real cards. Update: `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET` (the new live one).
-5. **Redeploy** prod (Vercel will auto-deploy on next push, or hit Redeploy in the dashboard).
-6. **Smoke test with real money you own.** Buy the cheapest product ($24.99 Custom Memory Video) on `expressitstudios.com` with your own card. Verify: order row created with `livemode=true`, confirmation email arrives, upload flow works end-to-end, admin sees it, you can deliver + approve.
-7. **Refund yourself** in Stripe. ~$1 in unrefundable fees — cost of doing business.
-8. **Announce.**
+Bank payouts: daily. Statement descriptor: `EXPRESSIT STUDIOS`. Receipt + refund emails enabled. Payment methods enabled: Card, Link, Apple Pay, Google Pay.
 
 ## Test data — keeping live + test separate
 
