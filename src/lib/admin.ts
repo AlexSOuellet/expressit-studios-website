@@ -213,17 +213,20 @@ function startOfMonth(now = new Date()): Date {
   return new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
-export async function getDashboardData(): Promise<{
+export async function getDashboardData(
+  opts: { includeTest?: boolean } = {}
+): Promise<{
   kpis: DashboardKpis;
   pipeline: PipelineCounts;
   recentOrders: AdminOrderListItem[];
 }> {
   const supabase = supabaseAdmin();
-  const { data } = await supabase
+  let q = supabase
     .from("orders")
     .select("*, videos:order_videos(video_index, status)")
-    .eq("livemode", true)
     .order("created_at", { ascending: false });
+  if (!opts.includeTest) q = q.eq("livemode", true);
+  const { data } = await q;
   const orders = (data ?? []) as AdminOrderListItem[];
 
   const weekStart = startOfWeek().getTime();
@@ -273,13 +276,16 @@ export async function getDashboardData(): Promise<{
   };
 }
 
-export async function listCustomers(): Promise<CustomerSummary[]> {
+export async function listCustomers(
+  opts: { includeTest?: boolean } = {}
+): Promise<CustomerSummary[]> {
   const supabase = supabaseAdmin();
-  const { data } = await supabase
+  let q = supabase
     .from("orders")
     .select("customer_email, price_cents, created_at")
-    .eq("livemode", true)
     .order("created_at", { ascending: false });
+  if (!opts.includeTest) q = q.eq("livemode", true);
+  const { data } = await q;
   const rows =
     (data as { customer_email: string; price_cents: number; created_at: string }[]) ?? [];
 
@@ -314,13 +320,16 @@ export type FinancialSummary = {
   byStatus: { status: OrderStatus; revenueCents: number; orderCount: number }[];
 };
 
-export async function getFinancialSummary(): Promise<FinancialSummary> {
+export async function getFinancialSummary(
+  opts: { includeTest?: boolean } = {}
+): Promise<FinancialSummary> {
   const supabase = supabaseAdmin();
-  const { data } = await supabase
+  let q = supabase
     .from("orders")
     .select("price_cents, product_slug, status, created_at")
-    .eq("livemode", true)
     .order("created_at", { ascending: false });
+  if (!opts.includeTest) q = q.eq("livemode", true);
+  const { data } = await q;
   const rows = (data ?? []) as {
     price_cents: number;
     product_slug: string;
@@ -364,24 +373,29 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
   };
 }
 
-export async function getRecentActivity(limit = 12): Promise<ActivityItem[]> {
+export async function getRecentActivity(
+  limit = 12,
+  opts: { includeTest?: boolean } = {}
+): Promise<ActivityItem[]> {
   const supabase = supabaseAdmin();
   // Orders themselves are the placement events.
-  const { data: orderRows } = await supabase
+  let orderQ = supabase
     .from("orders")
     .select("id, customer_email, created_at, price_cents")
-    .eq("livemode", true)
     .order("created_at", { ascending: false })
     .limit(limit);
+  if (!opts.includeTest) orderQ = orderQ.eq("livemode", true);
+  const { data: orderRows } = await orderQ;
   // For per-video lifecycle events we use submitted_at + status to reconstruct.
-  const { data: videoRows } = await supabase
+  let videoQ = supabase
     .from("order_videos")
     .select(
       "order_id, video_index, status, submitted_at, revision_note, revision_count, orders!inner(livemode, customer_email)"
     )
-    .eq("orders.livemode", true)
     .order("submitted_at", { ascending: false, nullsFirst: false })
     .limit(limit * 3);
+  if (!opts.includeTest) videoQ = videoQ.eq("orders.livemode", true);
+  const { data: videoRows } = await videoQ;
 
   const items: ActivityItem[] = [];
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getFinancialSummary } from "@/lib/admin";
 import { getProductBySlug, formatPrice } from "@/lib/products";
 import type { OrderStatus } from "@/lib/orders";
@@ -28,8 +29,18 @@ function formatMonth(key: string): string {
   });
 }
 
-export default async function FinancialPage() {
-  const { monthly, byProduct, byStatus } = await getFinancialSummary();
+type SearchParams = Promise<{ test?: string }>;
+
+export default async function FinancialPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const { test } = await searchParams;
+  const includeTest = test === "1";
+  const { monthly, byProduct, byStatus } = await getFinancialSummary({
+    includeTest,
+  });
 
   const titleBySlug = new Map<string, string>();
   await Promise.all(
@@ -53,9 +64,15 @@ export default async function FinancialPage() {
             Financial
           </h1>
           <p className="font-body text-body-md text-on-surface-variant">
-            Gross revenue from live Stripe orders. Does not subtract Stripe
-            fees (~2.9% + $0.30 per charge) — for the net view open the Stripe
-            dashboard directly.
+            Gross revenue from {includeTest ? "all" : "live"} Stripe orders.
+            Does not subtract Stripe fees (~2.9% + $0.30) — for the net view
+            open the Stripe dashboard directly.{" "}
+            <Link
+              href={includeTest ? "/admin/financial" : "/admin/financial?test=1"}
+              className="underline text-primary"
+            >
+              {includeTest ? "Hide test data" : "Show test data"}
+            </Link>
           </p>
         </header>
 

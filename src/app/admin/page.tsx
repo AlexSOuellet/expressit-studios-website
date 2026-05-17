@@ -89,10 +89,18 @@ function PipelineCol({
   );
 }
 
-export default async function DashboardPage() {
+type SearchParams = Promise<{ test?: string }>;
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const { test } = await searchParams;
+  const includeTest = test === "1";
   const [{ kpis, pipeline, recentOrders }, activity] = await Promise.all([
-    getDashboardData(),
-    getRecentActivity(8),
+    getDashboardData({ includeTest }),
+    getRecentActivity(8, { includeTest }),
   ]);
 
   const emptyState = kpis.ordersAllTime === 0;
@@ -108,11 +116,15 @@ export default async function DashboardPage() {
             Dashboard
           </h1>
           <p className="font-body text-body-md text-on-surface-variant">
-            Live-mode data only. Test orders hidden — see them under{" "}
-            <Link href="/admin/orders?test=1" className="underline text-primary">
-              Orders → Show test
+            {includeTest
+              ? "Including test (seeded + Stripe-test) orders."
+              : "Live-mode data only."}{" "}
+            <Link
+              href={includeTest ? "/admin" : "/admin?test=1"}
+              className="underline text-primary"
+            >
+              {includeTest ? "Hide test data" : "Show test data"}
             </Link>
-            .
           </p>
         </header>
 
@@ -175,7 +187,7 @@ export default async function DashboardPage() {
                     Recent orders
                   </h2>
                   <Link
-                    href="/admin/orders"
+                    href={includeTest ? "/admin/orders?test=1" : "/admin/orders"}
                     className="font-mono text-ui-mono uppercase tracking-widest text-primary hover:underline"
                   >
                     All orders →

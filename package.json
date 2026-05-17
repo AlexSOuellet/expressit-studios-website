@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "check:products": "node scripts/validate-products.mjs",
-    "wipe:test": "node scripts/wipe-test-data.mjs"
+    "wipe:test": "node scripts/wipe-test-data.mjs",
+    "seed:test": "node scripts/seed-test-data.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",

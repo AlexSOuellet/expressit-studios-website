@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { listCustomers } from "@/lib/admin";
 import { formatPrice } from "@/lib/products";
 
@@ -17,8 +18,16 @@ function formatDate(iso: string): string {
   });
 }
 
-export default async function CustomersPage() {
-  const customers = await listCustomers();
+type SearchParams = Promise<{ test?: string }>;
+
+export default async function CustomersPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const { test } = await searchParams;
+  const includeTest = test === "1";
+  const customers = await listCustomers({ includeTest });
 
   return (
     <main className="px-margin-mobile md:px-margin-desktop py-12">
@@ -32,8 +41,14 @@ export default async function CustomersPage() {
           </h1>
           <p className="font-body text-body-md text-on-surface-variant">
             {customers.length}{" "}
-            {customers.length === 1 ? "customer" : "customers"} with live
-            orders, sorted by total spent.
+            {customers.length === 1 ? "customer" : "customers"} with{" "}
+            {includeTest ? "any" : "live"} orders, sorted by total spent.{" "}
+            <Link
+              href={includeTest ? "/admin/customers" : "/admin/customers?test=1"}
+              className="underline text-primary"
+            >
+              {includeTest ? "Hide test data" : "Show test data"}
+            </Link>
           </p>
         </header>
 
